@@ -248,10 +248,11 @@ export default function App() {
     setTitleLoading(true);
       setTitle("제목을 고민하는 중");
       try {
-        const res = await fetch("http://localhost:4000/api/summarize-title", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
+        const res = await fetch(`${apiUrl}/api/generate-title`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
         });
         const data = await res.json();
         let cleanTitle = data.title || '';
@@ -406,7 +407,8 @@ export default function App() {
     const useVoiceId = voiceId || selectedVoiceRef.current.id;
     try {
       console.log(`Converting Take: ${take.name}`);
-      const response = await fetch(`http://localhost:4000/api/tts`, {
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      const response = await fetch(`${apiUrl}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: take.text, voice_id: useVoiceId }),
