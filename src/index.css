@@ -1,0 +1,53 @@
+@font-face {
+  font-family: 'Mysteria';
+  src: url('./assets/Mysteria-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'TYPEThirtytwo';
+  src: url('./assets/TYPEThirtytwo.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Eulyoo1945';
+  src: url('./assets/Eulyoo1945-Regular.woff2') format('woff2'),
+       url('./assets/Eulyoo1945-Regular.woff') format('woff'),
+       url('./assets/Eulyoo1945-Regular.eot') format('embedded-opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+:root {
+  --font-mysteria: 'Mysteria', sans-serif;
+  --font-type32: 'TYPEThirtytwo', sans-serif;
+  --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Eulyoo1945', serif;
+  --font-current: var(--font-mysteria);
+}
+body, html, #root, * {
+  font-family: var(--font-current) !important;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/*
+a, a:visited, a:active {
+  color: inherit !important;
+  font-weight: normal !important;
+  text-decoration: underline rgba(29, 29, 29, 0.4);
+  text-underline-position: under;
+  display: inline;
+  text-underline-offset: 5%;
+  transform: translateY(-5%);  
+}
+*/
