@@ -405,9 +405,9 @@ export default function App() {
   // TTS 변환 함수 - 오디오 URL만 생성
   const convertToSpeech = async (take, voiceId, signal) => {
     const useVoiceId = voiceId || selectedVoiceRef.current.id;
+    const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
     try {
-      console.log(`Converting Take: ${take.name}`);
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      console.log(`Converting Take: ${take.name} with API URL: ${apiUrl}/api/tts`);
       const response = await fetch(`${apiUrl}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -426,7 +426,8 @@ export default function App() {
       if (e.name === 'AbortError') {
         console.log('TTS fetch aborted.');
       } else {
-        console.error("TTS 변환 실패:", e);
+        // 어떤 URL로 요청했는지 명확히 로그에 남깁니다.
+        console.error(`TTS 변환 실패: API 주소(${apiUrl}/api/tts)로 fetch 요청 중 에러 발생`, e);
       }
       throw e;
     }
