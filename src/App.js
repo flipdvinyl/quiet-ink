@@ -129,6 +129,8 @@ export default function App() {
   const diceIntervalRef = useRef(null);
   const ttsAbortControllerRef = useRef(null);
   const isUnloadingRef = useRef(false);
+  const [typewriterStarted, setTypewriterStarted] = useState(false);
+  const [titleAnimationStatus, setTitleAnimationStatus] = useState('idle'); // 'idle', 'animating', 'finished'
 
   const iconButtonStyle = {
     width: 30,
@@ -261,7 +263,8 @@ export default function App() {
         setTitle(matchedMaterial.name);
         return;
       }
-    setTitleLoading(true);
+      setTitleAnimationStatus('idle'); // 애니메이션 상태 초기화
+      setTitleLoading(true);
       setTitle("제목을 고민하는 중");
       try {
         const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
@@ -276,8 +279,9 @@ export default function App() {
         cleanTitle = cleanTitle.replace(/["'「」«»()`]/g, '');
         cleanTitle = cleanTitle.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
         setTitle(cleanTitle);
-      } catch {
+      } catch (e) {
         setTitle("제목 생성 실패");
+        console.error('제목 생성 실패:', e.response?.data || e.message);
       } finally {
         setTitleLoading(false);
       }
@@ -945,17 +949,18 @@ export default function App() {
   }
 
   // Typewriter for generated title (show effect only when titleLoading 막 끝난 직후)
-  const [showTypewriterTitle, setShowTypewriterTitle] = useState(false);
-  const [typewriterStarted, setTypewriterStarted] = useState(false);
   useEffect(() => {
-    if (!titleLoading && title && title !== '제목을 고민하는 중') {
-      setShowTypewriterTitle(true);
+    if (!titleLoading && title && title !== '제목을 고민하는 중' && titleAnimationStatus === 'idle') {
       setTypewriterStarted(false);
-      const timeout = setTimeout(() => setShowTypewriterTitle(false), (title.length + 1) * 150 + 300);
+      setTitleAnimationStatus('animating');
+      const timeout = setTimeout(() => {
+        setTitleAnimationStatus('finished');
+      }, (title.length + 1) * 150 + 300);
       return () => clearTimeout(timeout);
     }
-  }, [title, titleLoading]);
-  const animatedFinalTitle = useTypewriterText(title, showTypewriterTitle, 150, () => {
+  }, [title, titleLoading, titleAnimationStatus]);
+
+  const animatedFinalTitle = useTypewriterText(title, titleAnimationStatus === 'animating', 150, () => {
     if (!typewriterStarted) setTypewriterStarted(true);
   });
 
@@ -1385,33 +1390,38 @@ export default function App() {
             marginBottom: isTabletPC ? '0px' : '0px',
             wordBreak: 'keep-all',
           }}>
-            {showTypewriterTitle
-              ? (typewriterStarted ? animatedFinalTitle : '')
-              : (
-                title
-                  ? title
-                  : (
-                    <span>
-                      {titleChars.map((char, idx) =>
-                        char === ' ' ? (
-                          ' '
-                        ) : (
-                          <span
-                            key={idx}
-                            style={
-                              idx === randomTitleIndex
-                                ? { position: 'relative', top: '-12px', display: 'inline-block', transition: 'top 0.3s' }
-                                : {}
-                            }
-                          >
-                            {char}
-                          </span>
-                        )
-                      )}
-                    </span>
-                  )
-              )
-            }
+            {(() => {
+              if (titleAnimationStatus === 'animating') {
+                return typewriterStarted ? animatedFinalTitle : '';
+              }
+              if (titleAnimationStatus === 'finished') {
+                return title;
+              }
+              if (title) { // '제목을 고민하는 중' 또는 초기 제목
+                return title;
+              }
+              // 기본 '읽는 사람' 애니메이션
+              return (
+                <span>
+                  {titleChars.map((char, idx) =>
+                    char === ' ' ? (
+                      ' '
+                    ) : (
+                      <span
+                        key={idx}
+                        style={
+                          idx === randomTitleIndex
+                            ? { position: 'relative', top: '-12px', display: 'inline-block', transition: 'top 0.3s' }
+                            : {}
+                        }
+                      >
+                        {char}
+                      </span>
+                    )
+                  )}
+                </span>
+              );
+            })()}
           </Typography>
         </Toolbar>
       </AppBar>
