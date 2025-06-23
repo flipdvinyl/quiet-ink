@@ -1995,11 +1995,13 @@ export default function App() {
         ) : (isPlaying || generatingTake !== null) && (
           <span>
             {/* 현재 재생중인 테이크 번호 */}
-            {isPlaying && currentAudio.current && <span>{currentTake + 1}</span>}
+            {isPlaying && currentAudio.current && generatingTake !== currentTake && (
+              <span>{currentTake + 1}</span>
+            )}
             {/* 생성중인 테이크 번호(깜빡임) */}
             {generatingTake !== null && (
               <Fade in={fadeIn} timeout={1000} appear={false}>
-                <span style={isPlaying && currentAudio.current ? { marginLeft: 6 } : {}}>{generatingTake + 1}</span>
+                <span style={isPlaying && currentAudio.current && generatingTake !== currentTake ? { marginLeft: 6 } : {}}>{generatingTake + 1}</span>
               </Fade>
             )}
           </span>
