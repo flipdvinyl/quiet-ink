@@ -58,5 +58,5 @@ a, a:visited, a:active {
 }
 
 a, button {
-  -webkit-tap-highlight-color: #A52A2A30; /* 옅은 갈색 */
+  -webkit-tap-highlight-color: rgba(165, 42, 42, 0.2); /* 갈색, 투명도 0.2 */
 }
