@@ -18,6 +18,8 @@
   font-weight: normal;
   font-style: normal;
 }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&display=swap');
+
 :root {
   --font-mysteria: 'Mysteria', sans-serif;
   --font-type32: 'TYPEThirtytwo', sans-serif;
@@ -33,6 +35,15 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: rgba(139, 69, 19, 0.1);
+  color: black;
+}
+
+a, button {
+  -webkit-tap-highlight-color: rgba(139, 69, 19, 0.1);
 }
 
 code {
@@ -51,12 +62,3 @@ a, a:visited, a:active {
   transform: translateY(-5%);  
 }
 */
-
-::selection {
-  background-color: #A52A2A; /* brown */
-  color: black;
-}
-
-a, button {
-  -webkit-tap-highlight-color: rgba(165, 42, 42, 0.2); /* 갈색, 투명도 0.2 */
-}

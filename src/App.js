@@ -129,6 +129,21 @@ export default function App() {
   const diceIntervalRef = useRef(null);
   const ttsAbortControllerRef = useRef(null);
 
+  const iconButtonStyle = {
+    width: 30,
+    height: 30,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    borderRadius: '50%',
+    transition: 'background-color 0.2s',
+    '&:active': {
+      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    },
+    WebkitTapHighlightColor: 'transparent',
+  };
+
   // 제목 효과용 랜덤 인덱스
   const TITLE_TEXT = "읽는 사람";
   const titleChars = TITLE_TEXT.split('');
@@ -1313,7 +1328,12 @@ export default function App() {
               p: 0,
               m: 0,
               display: 'block',
-              transition: 'left 1s cubic-bezier(0.4,0,0.2,1), top 1s cubic-bezier(0.4,0,0.2,1)',
+              transition: 'left 1s cubic-bezier(0.4,0,0.2,1), top 1s cubic-bezier(0.4,0,0.2,1), background-color 0.2s',
+              borderRadius: '8px',
+              '&:active': {
+                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+              },
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
             <svg width="48" height="48" viewBox="0 0 100 100" style={{ display: 'block', position: 'absolute', left: 0, top: 0, padding: 0, margin: 0, overflow: 'visible' }}>
@@ -1740,7 +1760,17 @@ export default function App() {
               <Box
                 key={take.name}
                 className={index === currentTake ? 'current-take' : ''}
-                sx={{ mb: `${lineHeightState}rem`, pb: 0, cursor: 'pointer' }}
+                sx={{
+                  mb: `${lineHeightState}rem`,
+                  pb: 0,
+                  cursor: 'pointer',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.2s ease-in-out',
+                  '&:active': {
+                    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                  },
+                  WebkitTapHighlightColor: 'transparent',
+                }}
                 onMouseDown={() => handlePlayFromTake(index)}
               >
                 {generatingTake === index ? (
@@ -1779,9 +1809,15 @@ export default function App() {
                   cursor: 'pointer',
                   fontWeight: 100, // 가장 얇은 두께
                   opacity: isRollingDice ? 1 : 0.2,
-                  transition: 'opacity 0.3s',
+                  transition: 'opacity 0.3s, background-color 0.2s',
                   userSelect: 'none',
-                  color: theme.text
+                  color: theme.text,
+                  padding: '1rem',
+                  borderRadius: '50%',
+                  '&:active': {
+                    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                  },
+                  WebkitTapHighlightColor: 'transparent',
                 }}
               >
                 {DICE_CHARS[diceIndex]}
@@ -2094,34 +2130,34 @@ export default function App() {
           userSelect: 'none',
         }}
       >
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={handleScrollTop}>
+        <Box sx={iconButtonStyle} onClick={handleScrollTop}>
           <span>^</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '120%' }} onClick={handleScrollCurrentTake}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '120%' }} onClick={handleScrollCurrentTake}>
           <span>~</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '90%' }} onClick={handleFontSizeUp}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleFontSizeUp}>
           <span>+</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '90%' }} onClick={handleFontSizeDown}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleFontSizeDown}>
           <span>-</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '90%' }} onClick={handleWidthUp}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleWidthUp}>
           <span>&gt;</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '90%' }} onClick={handleWidthDown}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleWidthDown}>
           <span>&lt;</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '80%' }} onClick={handleLineHeightUp}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleLineHeightUp}>
           <span>∧</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '80%' }} onClick={handleLineHeightDown}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleLineHeightDown}>
           <span>∨</span>
         </Box>
-        <Box sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '80%' }} onClick={handleToggleDark}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleToggleDark}>
           <span>●</span>
         </Box>
-        <Box sx={{ position: 'relative', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '80%' }} onClick={handleFontFamilyToggle}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%', position: 'relative' }} onClick={handleFontFamilyToggle}>
           <span>ㄱ</span>
           {showFontName && (
             <Box
