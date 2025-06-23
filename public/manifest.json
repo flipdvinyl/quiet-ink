@@ -3,7 +3,7 @@
   "name": "Quiet ink",
   "icons": [
     {
-      "src": "quietink_logo.svg",
+      "src": "quietink_pwa_logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable any"

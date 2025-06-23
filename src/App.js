@@ -1804,7 +1804,7 @@ export default function App() {
               >
                 {generatingTake === index ? (
                   <span style={{
-                    opacity: fadeIn ? 1 : 0.5,
+                    opacity: fadeIn ? 1 : 0.3,
                     transition: 'opacity 1s ease-in-out',
                     display: 'inline-block' // transition을 위해 추가
                   }}>
