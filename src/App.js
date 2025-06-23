@@ -1201,7 +1201,7 @@ export default function App() {
         } while (newIndex === prevIndex);
         return newIndex;
       });
-    }, 1000);
+    }, 500);
     return () => clearInterval(interval);
   }, []);
 
