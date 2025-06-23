@@ -128,6 +128,7 @@ export default function App() {
   const [isRollingDice, setIsRollingDice] = useState(false);
   const diceIntervalRef = useRef(null);
   const ttsAbortControllerRef = useRef(null);
+  const isUnloadingRef = useRef(false);
 
   const iconButtonStyle = {
     width: 30,
@@ -535,6 +536,10 @@ export default function App() {
       }
       playTake(0);
     } catch (e) {
+      if (isUnloadingRef.current) {
+        console.log('TTS generation aborted due to page unload.');
+        return;
+      }
       if (e.name === 'AbortError') {
         console.log('TTS generation aborted.');
         return; // 그냥 종료. 새로운 요청이 처리될 것임.
@@ -737,6 +742,10 @@ export default function App() {
       }
       playTake(startIndex);
     } catch (e) {
+      if (isUnloadingRef.current) {
+        console.log('TTS generation from take aborted due to page unload.');
+        return;
+      }
       if (e.name === 'AbortError') {
         console.log('TTS generation from take aborted.');
         return;
@@ -1299,6 +1308,16 @@ export default function App() {
       }, 100);
     }, 1000);
   };
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      isUnloadingRef.current = true;
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
