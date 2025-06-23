@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from 'react-dom';
 import {
   AppBar, Toolbar, Typography, Box, Tabs, Tab, TextField, Button,
   Select, MenuItem, FormControl, InputLabel, Card, CardContent, CircularProgress,
-  Alert, Fade
+  Alert, Fade, Backdrop
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT } from './data/sampleTexts';
@@ -16,7 +17,8 @@ const PopupCard = ({
   popupInitialX,
   popupInitialRotation,
   theme,
-  isTabletPC
+  isTabletPC,
+  sx
 }) => {
   useEffect(() => {
     if (!isOpen) return;
@@ -34,7 +36,7 @@ const PopupCard = ({
     return null;
   }
   
-  return (
+  const cardContent = (
     <Box
       id="reusable-popup-card"
       sx={{
@@ -69,16 +71,19 @@ const PopupCard = ({
           '0%': { transform: 'translate(-50%, 0) rotate(0deg)', visibility: 'visible', opacity: 1 },
           '99.9%': { transform: `translate(calc(-50% + ${popupInitialX}px), calc(100% + 80px)) rotate(${popupInitialRotation}deg)`, visibility: 'visible', opacity: 1 },
           '100%': { transform: `translate(calc(-50% + ${popupInitialX}px), calc(100% + 80px)) rotate(${popupInitialRotation}deg)`, visibility: 'hidden', opacity: 1 },
-        }
+        },
+        ...sx
       }}
       onClick={e => e.stopPropagation()}
     >
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 700, color: theme.text, px: 3, pt: 3, textAlign: 'left', textTransform: 'none' }}>
+      <Typography variant="h5" sx={{ mb: 3, fontWeight: 400, WebkitTextStroke: '0.03em', paintOrder: 'stroke fill', color: theme.text, px: 3, pt: 3, textAlign: 'left', textTransform: 'none' }}>
         {title}
       </Typography>
       {children}
     </Box>
   );
+
+  return isOpen ? ReactDOM.createPortal(cardContent, document.body) : cardContent;
 };
 
 export default function App() {
@@ -961,6 +966,13 @@ export default function App() {
 
   useEffect(() => {
     document.body.style.background = theme.background;
+    // Set html background as well for overscroll (macOS/iOS)
+    document.documentElement.style.background = theme.background;
+    // Set overscroll background for iOS/macOS Safari
+    document.documentElement.style.webkitOverflowScrolling = 'touch';
+    document.documentElement.style.overscrollBehavior = 'none';
+    // Set CSS variable for possible use in global CSS
+    document.documentElement.style.setProperty('--app-background', theme.background);
   }, [theme.background]);
 
 
@@ -1179,7 +1191,7 @@ export default function App() {
         } while (newIndex === prevIndex);
         return newIndex;
       });
-    }, 500);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1344,7 +1356,7 @@ export default function App() {
             setTakes([]);
             setCurrentTake(0);
             setIsPlaying(false);
-            if (currentAudio.current) { currentAudio.current.pause(); }
+            if (currentAudio.current) currentAudio.current.pause();
             currentAudio.current = null;
             setCurrentAudioState(null);
             setAudioUrl(null);
@@ -1424,8 +1436,10 @@ export default function App() {
           <Typography variant="h6" component="div" sx={{
             width: '100%',
             color: theme.text,
-            fontWeight: 1000,
+            fontWeight: 400,
             fontSize: isTabletPC ? '6rem' : '3rem',
+            WebkitTextStroke: '0.03em',
+            paintOrder: 'stroke fill',
             letterSpacing: 'normal',
             lineHeight: 1.2,
             textAlign: 'center',
@@ -1691,7 +1705,11 @@ export default function App() {
                 cursor: 'pointer',
                 borderRadius: 2,
                 color: '#44444440',
-                fontSize: 16
+                fontSize: 16,
+                WebkitTapHighlightColor: 'rgba(139, 69, 19, 0.1)',
+                '&:active': {
+                  backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                },
               }}
                     onClick={async (e) => {
                       // 좌상단 80x80px 클릭시 이 이벤트는 무시됨
@@ -1779,6 +1797,7 @@ export default function App() {
             popupInitialRotation={popupInitialRotation}
             theme={theme}
             isTabletPC={isTabletPC}
+            sx={{ zIndex: 3000 }}
           >
             <Box sx={{ px: 3, color: `${theme.text}B3` }}>
               <Typography sx={{ whiteSpace: 'pre-line', mb: 3 }}>
@@ -1801,6 +1820,7 @@ export default function App() {
                     key={item.name}
                     sx={{
                       cursor: 'pointer',
+                      WebkitTapHighlightColor: 'transparent',
                     }}
                     onClick={() => {
                       handleCloseGptGuide();
@@ -1879,9 +1899,6 @@ export default function App() {
                   color: theme.text,
                   padding: '1rem',
                   borderRadius: '50%',
-                  '&:active': {
-                    backgroundColor: 'rgba(139, 69, 19, 0.1)',
-                  },
                   WebkitTapHighlightColor: 'transparent',
                 }}
               >
@@ -1983,7 +2000,9 @@ export default function App() {
             minHeight: 0,
             minWidth: 0,
             borderRadius: 0,
-            fontWeight: "bold",
+            fontWeight: "normal",
+            WebkitTextStroke: '0.03em',
+            paintOrder: 'stroke fill',
             fontSize: 18,
               height: '67px',
               lineHeight: '67px',
@@ -2075,6 +2094,7 @@ export default function App() {
             popupInitialRotation={popupInitialRotation}
             theme={theme}
             isTabletPC={isTabletPC}
+            sx={{ zIndex: 3000 }}
           >
             {ALL_VOICES.map((v, idx) => (
               <Box
@@ -2084,6 +2104,13 @@ export default function App() {
                   pb: '10px',
                   px: 3,
                   cursor: v.isCustom ? 'default' : 'pointer',
+                  borderRadius: '8px',
+                  WebkitTapHighlightColor: 'rgba(139, 69, 19, 0.1)',
+                  ...(!v.isCustom && {
+                    '&:active': {
+                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                    },
+                  }),
                 }}
                 {...(!v.isCustom && {
                   onMouseDown: e => {
@@ -2179,6 +2206,14 @@ export default function App() {
         )}
         </Box>
       </Box>
+      <Backdrop
+        sx={{ zIndex: 2999, backgroundColor: 'transparent' }}
+        open={voiceMenuOpen || showGptGuide}
+        onClick={() => {
+          if (voiceMenuOpen) handleCloseVoiceMenu();
+          if (showGptGuide) handleCloseGptGuide();
+        }}
+      />
       {/* 오른쪽 세로 중앙 텍스트 아이콘 (스케일 1.5배) */}
       <Box
         sx={{
