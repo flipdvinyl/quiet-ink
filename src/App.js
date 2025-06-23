@@ -1319,6 +1319,52 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleSharedContent = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sharedContent = params.get('text') || params.get('url');
+
+      if (sharedContent) {
+        // Clear the query params from the URL so it doesn't run again on reload
+        if (window.history.pushState) {
+          const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+          window.history.pushState({ path: newUrl }, '', newUrl);
+        }
+
+        if (/^https?:\/\//.test(sharedContent)) { // It's a URL
+          const prompt = `${sharedContent}\\n\\n위 내용을 책의 문장으로 활용하게 충분한 분량으로 재구성 해줘. 해당 콘텐츠에 맞는 문체로, 문장의 나열로, 표나 카테고리 구분을 짓지 않고, 소제목도 필요없어. 가능하다면 여러 문단으로 구성해줘. 만약 댓글이 있다면 댓글내용도 요약해서 마지막에 문장 하나로 구성해줘. 내용 앞뒤에 답변도 절대 달지 말아줘.`;
+          try {
+            await navigator.clipboard.writeText(prompt);
+            setRandomPopupInitialValues();
+            setShowGptGuide(true);
+            // also reset state
+            setText("");
+            setUrl("");
+            setTitle("");
+            setTakes([]);
+            setCurrentTake(0);
+            setIsPlaying(false);
+            if (currentAudio.current) { currentAudio.current.pause(); }
+            currentAudio.current = null;
+            setCurrentAudioState(null);
+            setAudioUrl(null);
+            setGeneratingTake(null);
+            setCurrentWordIndex(0);
+            setUiHidden(false);
+            setIsAudioPlaying(false);
+          } catch (err) {
+            console.error('Failed to handle shared URL:', err);
+            setText(sharedContent); // Fallback
+          }
+        } else { // It's plain text
+          setText(sharedContent);
+        }
+      }
+    };
+
+    handleSharedContent();
+  }, []); // Run only once on mount
+
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
       <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: theme.background, color: theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>

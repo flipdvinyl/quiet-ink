@@ -28,5 +28,14 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#dcdcdc",
-  "background_color": "#dcdcdc"
+  "background_color": "#dcdcdc",
+  "share_target": {
+    "action": "/index.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "text": "text",
+      "url": "url"
+    }
+  }
 }
