@@ -606,21 +606,25 @@ export default function App() {
       return;
     }
     try {
-      if (currentAudio.current) {
-        currentAudio.current.pause();
-        currentAudio.current.currentTime = 0;
-        currentAudio.current.src = '';
-        currentAudio.current.onended = null;
-        currentAudio.current.onplay = null;
-        currentAudio.current.ontimeupdate = null;
-        currentAudio.current = null;
+      // === 변경: Audio 객체를 재사용 ===
+      let audio = currentAudio.current;
+      if (!audio) {
+        audio = new Audio();
+        currentAudio.current = audio;
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.onended = null;
+        audio.onplay = null;
+        audio.ontimeupdate = null;
+        audio.onerror = null;
+        // src를 바꾸기 전에 srcObject도 null로
+        audio.srcObject = null;
       }
-      const audio = new Audio();
       audio.onerror = (e) => {
         console.error(`Audio error for take ${takeIndex}:`, e);
       };
       audio.ontimeupdate = () => {
-        // 안전하게 체크: takesRef.current와 현재 take가 존재하는지
         if (!takesRef.current || !takesRef.current[takeIndex] || !takesRef.current[takeIndex].text) {
           console.warn('Take text not available for index:', takeIndex);
           return;
@@ -639,15 +643,12 @@ export default function App() {
         console.log(`Take ${takeIndex} started playing`);
         setCurrentTake(takeIndex);
         setIsAudioPlaying(true);
-        // 이 테이크의 '생성 중' 애니메이션 중지
         setGeneratingTake(currentGenerating =>
           currentGenerating === takeIndex ? null : currentGenerating
         );
-        // === 추가: 테이크가 화면 밖에 있으면 스크롤 ===
         setTimeout(() => {
           handleScrollCurrentTake();
         }, 200);
-        // ===
       };
       audio.onpause = () => {
         setIsAudioPlaying(false);
@@ -662,15 +663,12 @@ export default function App() {
         const { signal } = ttsAbortControllerRef.current || { signal: undefined };
         setTimeout(() => playTake(takeIndex + 1, signal), 1000);
       };
-      currentAudio.current = audio;
       setCurrentAudioState(audio);
       audio.src = audioUrl;
       audio.load();
-      // 재생 시작(비동기)
       audio.play()
         .then(() => {
           console.log(`Successfully started playing take ${takeIndex}`);
-          // 마지막 테이크가 아니면 다음 테이크 미리 준비
           if (takeIndex < takesRef.current.length - 1) {
             const { signal } = ttsAbortControllerRef.current || { signal: undefined };
             prepareNextTake(takeIndex + 1, null, signal);
