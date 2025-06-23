@@ -129,8 +129,6 @@ export default function App() {
   const diceIntervalRef = useRef(null);
   const ttsAbortControllerRef = useRef(null);
   const isUnloadingRef = useRef(false);
-  const [typewriterStarted, setTypewriterStarted] = useState(false);
-  const [titleAnimationStatus, setTitleAnimationStatus] = useState('idle'); // 'idle', 'animating', 'finished'
 
   const iconButtonStyle = {
     width: 30,
@@ -263,8 +261,7 @@ export default function App() {
         setTitle(matchedMaterial.name);
         return;
       }
-      setTitleAnimationStatus('idle'); // 애니메이션 상태 초기화
-      setTitleLoading(true);
+    setTitleLoading(true);
       setTitle("제목을 고민하는 중");
       try {
         const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
@@ -279,9 +276,8 @@ export default function App() {
         cleanTitle = cleanTitle.replace(/["'「」«»()`]/g, '');
         cleanTitle = cleanTitle.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
         setTitle(cleanTitle);
-      } catch (e) {
+      } catch {
         setTitle("제목 생성 실패");
-        console.error('제목 생성 실패:', e.response?.data || e.message);
       } finally {
         setTitleLoading(false);
       }
@@ -949,18 +945,17 @@ export default function App() {
   }
 
   // Typewriter for generated title (show effect only when titleLoading 막 끝난 직후)
+  const [showTypewriterTitle, setShowTypewriterTitle] = useState(false);
+  const [typewriterStarted, setTypewriterStarted] = useState(false);
   useEffect(() => {
-    if (!titleLoading && title && title !== '제목을 고민하는 중' && titleAnimationStatus === 'idle') {
+    if (!titleLoading && title && title !== '제목을 고민하는 중') {
+      setShowTypewriterTitle(true);
       setTypewriterStarted(false);
-      setTitleAnimationStatus('animating');
-      const timeout = setTimeout(() => {
-        setTitleAnimationStatus('finished');
-      }, (title.length + 1) * 150 + 300);
+      const timeout = setTimeout(() => setShowTypewriterTitle(false), (title.length + 1) * 150 + 300);
       return () => clearTimeout(timeout);
     }
-  }, [title, titleLoading, titleAnimationStatus]);
-
-  const animatedFinalTitle = useTypewriterText(title, titleAnimationStatus === 'animating', 150, () => {
+  }, [title, titleLoading]);
+  const animatedFinalTitle = useTypewriterText(title, showTypewriterTitle, 150, () => {
     if (!typewriterStarted) setTypewriterStarted(true);
   });
 
@@ -1390,38 +1385,33 @@ export default function App() {
             marginBottom: isTabletPC ? '0px' : '0px',
             wordBreak: 'keep-all',
           }}>
-            {(() => {
-              if (titleAnimationStatus === 'animating') {
-                return typewriterStarted ? animatedFinalTitle : '';
-              }
-              if (titleAnimationStatus === 'finished') {
-                return title;
-              }
-              if (title) { // '제목을 고민하는 중' 또는 초기 제목
-                return title;
-              }
-              // 기본 '읽는 사람' 애니메이션
-              return (
-                <span>
-                  {titleChars.map((char, idx) =>
-                    char === ' ' ? (
-                      ' '
-                    ) : (
-                      <span
-                        key={idx}
-                        style={
-                          idx === randomTitleIndex
-                            ? { position: 'relative', top: '-12px', display: 'inline-block', transition: 'top 0.3s' }
-                            : {}
-                        }
-                      >
-                        {char}
-                      </span>
-                    )
-                  )}
-                </span>
-              );
-            })()}
+            {showTypewriterTitle
+              ? (typewriterStarted ? animatedFinalTitle : '')
+              : (
+                title
+                  ? title
+                  : (
+                    <span>
+                      {titleChars.map((char, idx) =>
+                        char === ' ' ? (
+                          ' '
+                        ) : (
+                          <span
+                            key={idx}
+                            style={
+                              idx === randomTitleIndex
+                                ? { position: 'relative', top: '-12px', display: 'inline-block', transition: 'top 0.3s' }
+                                : {}
+                            }
+                          >
+                            {char}
+                          </span>
+                        )
+                      )}
+                    </span>
+                  )
+              )
+            }
           </Typography>
         </Toolbar>
       </AppBar>
@@ -1803,18 +1793,16 @@ export default function App() {
                 onMouseDown={() => handlePlayFromTake(index)}
               >
                 {generatingTake === index ? (
-                  <span style={{
-                    opacity: fadeIn ? 1 : 0.3,
-                    transition: 'opacity 1s ease-in-out',
-                    display: 'inline-block' // transition을 위해 추가
-                  }}>
-                    <HighlightedText
-                      text={take.text}
-                      currentIndex={-1}
-                      fontSize={takeFontSize}
-                      isCurrentTake={index === currentTake}
-                    />
-                  </span>
+                  <Fade in={fadeIn} timeout={1000} style={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.5 }}>
+                    <span>
+                      <HighlightedText
+                        text={take.text}
+                        currentIndex={-1}
+                        fontSize={takeFontSize}
+                        isCurrentTake={index === currentTake}
+                      />
+                    </span>
+                  </Fade>
                 ) : (
                   <HighlightedText
                     text={take.text}
@@ -1903,14 +1891,9 @@ export default function App() {
             {isPlaying && currentAudio.current && <span>{currentTake + 1}</span>}
             {/* 생성중인 테이크 번호(깜빡임) */}
             {generatingTake !== null && (
-              <span style={{
-                display: 'inline-block',
-                marginLeft: isPlaying && currentAudio.current ? 6 : 0,
-                opacity: fadeIn ? 1 : 0.3,
-                transition: 'opacity 1s ease-in-out',
-              }}>
-                {generatingTake + 1}
-              </span>
+              <Fade in={fadeIn} timeout={1000} appear={false}>
+                <span style={isPlaying && currentAudio.current ? { marginLeft: 6 } : {}}>{generatingTake + 1}</span>
+              </Fade>
             )}
           </span>
         )}
