@@ -51,3 +51,12 @@ a, a:visited, a:active {
   transform: translateY(-5%);  
 }
 */
+
+::selection {
+  background-color: #A52A2A; /* brown */
+  color: black;
+}
+
+a, button {
+  -webkit-tap-highlight-color: #A52A2A30; /* 옅은 갈색 */
+}
