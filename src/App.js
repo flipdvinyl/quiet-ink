@@ -1377,6 +1377,34 @@ export default function App() {
     handleSharedContent();
   }, []); // Run only once on mount
 
+  // 모든 폰트 미리 로드 (최초 렌더 후, 모든 요소 로드 이후)
+  useEffect(() => {
+    const handleLoad = () => {
+      // Mysteria
+      const mysteria = new window.FontFace(
+        'Mysteria',
+        "url('./assets/Mysteria-Regular.otf') format('opentype')"
+      );
+      // TYPEThirtytwo
+      const type32 = new window.FontFace(
+        'TYPEThirtytwo',
+        "url('./assets/TYPEThirtytwo.otf') format('opentype')"
+      );
+      // Eulyoo1945 (woff2 우선)
+      const eulyoo = new window.FontFace(
+        'Eulyoo1945',
+        "url('./assets/Eulyoo1945-Regular.woff2') format('woff2'), url('./assets/Eulyoo1945-Regular.woff') format('woff'), url('./assets/Eulyoo1945-Regular.eot') format('embedded-opentype')"
+      );
+      Promise.all([
+        mysteria.load().then(font => document.fonts.add(font)).catch(() => {}),
+        type32.load().then(font => document.fonts.add(font)).catch(() => {}),
+        eulyoo.load().then(font => document.fonts.add(font)).catch(() => {}),
+      ]);
+    };
+    window.addEventListener('load', handleLoad);
+    return () => window.removeEventListener('load', handleLoad);
+  }, []);
+
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
       <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: theme.background, color: theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>
