@@ -2167,13 +2167,13 @@ export default function App() {
         <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleWidthDown}>
           <span>&lt;</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleLineHeightUp}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '70%' }} onClick={handleLineHeightUp}>
           <span>∧</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleLineHeightDown}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '70%' }} onClick={handleLineHeightDown}>
           <span>∨</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleToggleDark}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '70%' }} onClick={handleToggleDark}>
           <span>●</span>
         </Box>
         <Box sx={{ ...iconButtonStyle, fontSize: '80%', position: 'relative' }} onClick={handleFontFamilyToggle}>
