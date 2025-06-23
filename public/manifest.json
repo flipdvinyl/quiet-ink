@@ -3,26 +3,9 @@
   "name": "읽는 사람",
   "icons": [
     {
-      "src": "quietink_logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
       "src": "quietink_pwa_logo.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "type": "image/svg+xml"
     }
   ],
   "start_url": ".",
