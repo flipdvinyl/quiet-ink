@@ -472,14 +472,14 @@ export default function App() {
     } catch (e) {
       if (e.name !== 'AbortError') {
         console.error(`Take ${nextIndex} 생성 실패:`, e);
+        // 생성 실패 시 애니메이션 중지
+        setGeneratingTake(currentGeneratingTake => {
+          if (currentGeneratingTake === nextIndex) {
+            return null;
+          }
+          return currentGeneratingTake;
+        });
       }
-      // 생성 실패 시 애니메이션 중지
-      setGeneratingTake(currentGeneratingTake => {
-        if (currentGeneratingTake === nextIndex) {
-          return null;
-        }
-        return currentGeneratingTake;
-      });
     }
   };
 
@@ -1347,6 +1347,8 @@ export default function App() {
               p: 0,
               m: 0,
               display: 'block',
+              transform: 'scale(0.8)',
+              transformOrigin: 'top left',
               transition: 'left 1s cubic-bezier(0.4,0,0.2,1), top 1s cubic-bezier(0.4,0,0.2,1), background-color 0.2s',
               borderRadius: '8px',
               '&:active': {
@@ -1367,7 +1369,7 @@ export default function App() {
                 points="100,0 0,65 70,84"
                 fill={darkMode ? '#222222' : '#efefef'}
                 style={{
-                  filter: 'drop-shadow(3px 3px 10px rgba(128,128,128,0.3))',
+                  filter: 'drop-shadow(3px 3px 30px rgba(128,128,128,0.3))',
                   transition: 'fill 0.3s',
                 }}
               />
@@ -1793,16 +1795,14 @@ export default function App() {
                 onMouseDown={() => handlePlayFromTake(index)}
               >
                 {generatingTake === index ? (
-                  <Fade in={fadeIn} timeout={1000} style={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.5 }}>
-                    <span>
-                      <HighlightedText
-                        text={take.text}
-                        currentIndex={-1}
-                        fontSize={takeFontSize}
-                        isCurrentTake={index === currentTake}
-                      />
-                    </span>
-                  </Fade>
+                  <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
+                    <HighlightedText
+                      text={take.text}
+                      currentIndex={-1}
+                      fontSize={takeFontSize}
+                      isCurrentTake={index === currentTake}
+                    />
+                  </Box>
                 ) : (
                   <HighlightedText
                     text={take.text}
