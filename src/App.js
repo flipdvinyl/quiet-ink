@@ -134,6 +134,8 @@ export default function App() {
   const diceIntervalRef = useRef(null);
   const ttsAbortControllerRef = useRef(null);
   const isUnloadingRef = useRef(false);
+  // iOS 오디오 정책 우회용: 최초 1회 무음 재생
+  const mutePlayedRef = useRef(false);
 
   const iconButtonStyle = {
     width: 30,
@@ -515,6 +517,19 @@ export default function App() {
       return;
     }
 
+    // iOS 첫 재생 우회: mute.wav 재생 (최초 1회만, 동기화 보장)
+    if (!mutePlayedRef.current && currentAudio.current) {
+      try {
+        currentAudio.current.src = '/mute.wav';
+        await currentAudio.current.play(); // play가 끝나야만 다음 단계로
+        currentAudio.current.pause();
+        currentAudio.current.src = '';
+        mutePlayedRef.current = true;
+      } catch (e) {
+        // 무음 재생 실패해도 무시
+      }
+    }
+    // 이제 TTS 오디오 생성 및 재생 로직 시작
     if (ttsAbortControllerRef.current) {
       ttsAbortControllerRef.current.abort();
     }
@@ -559,7 +574,6 @@ export default function App() {
         currentAudio.current.onended = null;
         currentAudio.current.onplay = null;
         currentAudio.current.ontimeupdate = null;
-        currentAudio.current = null;
       }
       setVoiceMenuOpen(true);
     }
@@ -693,12 +707,11 @@ export default function App() {
 
     if (currentAudio.current) {
       currentAudio.current.pause();
-      currentAudio.currentTime = 0;
+      currentAudio.current.currentTime = 0;
       currentAudio.current.src = '';
       currentAudio.current.onended = null;
       currentAudio.current.onplay = null;
       currentAudio.current.ontimeupdate = null;
-      currentAudio.current = null;
     }
     setIsPlaying(false);
     setIsPaused(false);
@@ -764,7 +777,6 @@ export default function App() {
         currentAudio.current.onended = null;
         currentAudio.current.onplay = null;
         currentAudio.current.ontimeupdate = null;
-        currentAudio.current = null;
       }
       setVoiceMenuOpen(true);
     }
@@ -1269,7 +1281,6 @@ export default function App() {
         // 기존 재생 중지
         if (currentAudio.current) {
           currentAudio.current.pause();
-          currentAudio.current = null;
         }
 
         // 상태 초기화 (UI는 숨기지 않음)
@@ -1401,6 +1412,13 @@ export default function App() {
     };
     window.addEventListener('load', handleLoad);
     return () => window.removeEventListener('load', handleLoad);
+  }, []);
+
+  // 앱 실행 시 오디오 객체 미리 생성
+  useEffect(() => {
+    if (!currentAudio.current) {
+      currentAudio.current = new Audio();
+    }
   }, []);
 
   return (
