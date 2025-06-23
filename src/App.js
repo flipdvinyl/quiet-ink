@@ -1803,16 +1803,18 @@ export default function App() {
                 onMouseDown={() => handlePlayFromTake(index)}
               >
                 {generatingTake === index ? (
-                  <Fade in={fadeIn} timeout={1000} style={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.5 }}>
-                    <span>
-                      <HighlightedText
-                        text={take.text}
-                        currentIndex={-1}
-                        fontSize={takeFontSize}
-                        isCurrentTake={index === currentTake}
-                      />
-                    </span>
-                  </Fade>
+                  <span style={{
+                    opacity: fadeIn ? 1 : 0.5,
+                    transition: 'opacity 1s ease-in-out',
+                    display: 'inline-block' // transition을 위해 추가
+                  }}>
+                    <HighlightedText
+                      text={take.text}
+                      currentIndex={-1}
+                      fontSize={takeFontSize}
+                      isCurrentTake={index === currentTake}
+                    />
+                  </span>
                 ) : (
                   <HighlightedText
                     text={take.text}
@@ -1901,9 +1903,14 @@ export default function App() {
             {isPlaying && currentAudio.current && <span>{currentTake + 1}</span>}
             {/* 생성중인 테이크 번호(깜빡임) */}
             {generatingTake !== null && (
-              <Fade in={fadeIn} timeout={1000} appear={false}>
-                <span style={isPlaying && currentAudio.current ? { marginLeft: 6 } : {}}>{generatingTake + 1}</span>
-              </Fade>
+              <span style={{
+                display: 'inline-block',
+                marginLeft: isPlaying && currentAudio.current ? 6 : 0,
+                opacity: fadeIn ? 1 : 0.3,
+                transition: 'opacity 1s ease-in-out',
+              }}>
+                {generatingTake + 1}
+              </span>
             )}
           </span>
         )}
