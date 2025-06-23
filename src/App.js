@@ -131,8 +131,6 @@ export default function App() {
   const isUnloadingRef = useRef(false);
   const [typewriterStarted, setTypewriterStarted] = useState(false);
   const [titleAnimationStatus, setTitleAnimationStatus] = useState('idle'); // 'idle', 'animating', 'finished'
-  const [installPromptEvent, setInstallPromptEvent] = useState(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
 
   const iconButtonStyle = {
     width: 30,
@@ -1326,32 +1324,6 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setInstallPromptEvent(e);
-      setShowInstallButton(true);
-      console.log('beforeinstallprompt event fired');
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!installPromptEvent) {
-      return;
-    }
-    installPromptEvent.prompt();
-    const { outcome } = await installPromptEvent.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-    setInstallPromptEvent(null);
-    setShowInstallButton(false);
-  };
-
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
       <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: theme.background, color: theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>
@@ -1482,37 +1454,19 @@ export default function App() {
         {/* UI 숨김: 입력/설정/URL/모델 등 영역 전체를 숨김 */}
         {!uiHidden && (
           <>
-            {showInstallButton && (
-              <Button
-                variant="contained"
-                onClick={handleInstallClick}
-                sx={{
-                  mt: 2,
-                  mb: 2,
-                  bgcolor: theme.accent,
-                  color: theme.background,
-                  '&:hover': {
-                    bgcolor: theme.accent,
-                    opacity: 0.9,
-                  },
-                }}
-              >
-                홈 화면에 앱 추가
-              </Button>
-            )}
-            <FormControl fullWidth sx={{ mt: 3, border: 'none', boxShadow: 'none', bgcolor: 'transparent', display: 'none' }}>
+        <FormControl fullWidth sx={{ mt: 3, border: 'none', boxShadow: 'none', bgcolor: 'transparent', display: 'none' }}>
               <InputLabel sx={{ color: theme.text }}>Speech 모델</InputLabel>
-              <Select
-                value={model}
-                label="Speech 모델"
-                onChange={e => setModel(e.target.value)}
-                    sx={{ color: theme.text }}
-              >
-                    <MenuItem value="sona_speech_1" sx={{ color: theme.text }}>Sona Speech 1</MenuItem>
-                    <MenuItem value="sona_speech_2" sx={{ color: theme.text }}>Sona Speech 2</MenuItem>
-                {/* 필요시 모델 추가 */}
-              </Select>
-            </FormControl>
+          <Select
+            value={model}
+            label="Speech 모델"
+            onChange={e => setModel(e.target.value)}
+                sx={{ color: theme.text }}
+          >
+                <MenuItem value="sona_speech_1" sx={{ color: theme.text }}>Sona Speech 1</MenuItem>
+                <MenuItem value="sona_speech_2" sx={{ color: theme.text }}>Sona Speech 2</MenuItem>
+            {/* 필요시 모델 추가 */}
+          </Select>
+        </FormControl>
           </>
         )}
         {/* 글감 모음/구분선 */}
