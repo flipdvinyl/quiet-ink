@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 100 100">
+  <style>
+    path, rect {
+      fill: #8B4513; /* brown */
+    }
+    @media (prefers-color-scheme: dark) {
+      path, rect {
+        fill: #FFFFFF; /* white */
+      }
+    }
+  </style>
+  <!-- Generator: Adobe Illustrator 28.7.0, SVG Export Plug-In . SVG Version: 1.2.0 Build 136)  -->
+  <g>
+    <g id="Layer_1">
+      <path d="M50.12,89.71c-17.68,0-32.07-14.39-32.07-32.07s14.39-32.07,32.07-32.07,32.07,14.39,32.07,32.07-14.39,32.07-32.07,32.07ZM50.12,36.63c-11.59,0-21.01,9.43-21.01,21.01s9.43,21.01,21.01,21.01,21.01-9.43,21.01-21.01-9.43-21.01-21.01-21.01Z"/>
+      <rect x="44.59" y="10.3" width="11.06" height="26.33"/>
+    </g>
+  </g>
+</svg>
