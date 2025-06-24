@@ -615,6 +615,10 @@ export default function App() {
         URL.revokeObjectURL(url);
       });
       audioBufferRef.current = {};
+      // 마지막 테이크까지 다 읽었으면 주사위 버튼이 보이는 가장 아래로 스크롤
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 300);
       return;
     }
     const audioUrl = audioBufferRef.current[takeIndex];
@@ -846,6 +850,12 @@ export default function App() {
         return;
       }
       if (e.code === 'Space') {
+        // 마지막 테이크까지 재생이 끝난 후(즉, takes.length > 0이고 isPlaying/Paused/Loading 모두 false)
+        if (takes.length > 0 && !isPlaying && !isPaused && !loading) {
+          e.preventDefault();
+          handleDiceClick();
+          return;
+        }
         if (takes.length === 0 && !isPlaying && !isPaused && !loading) {
           e.preventDefault();
           if (!text) {
@@ -853,16 +863,6 @@ export default function App() {
             return;
           }
           handleTTS();
-        } else if (
-          takes.length > 0 &&
-          !isPlaying &&
-          !isPaused &&
-          !loading &&
-          currentTake === takes.length - 1
-        ) {
-          // 마지막 테이크까지 재생을 마친 후 스페이스바를 누르면 주사위 실행
-          e.preventDefault();
-          handleDiceClick();
         } else if (isPlaying || isPaused) {
           e.preventDefault();
           handleTTS();
@@ -1950,7 +1950,9 @@ export default function App() {
               display: 'flex', 
               justifyContent: 'center',
               alignItems: 'center'
-            }}>
+            }}
+            className="dice-footer-box"
+            >
               <Box 
                 onClick={handleDiceClick}
                 sx={{ 
