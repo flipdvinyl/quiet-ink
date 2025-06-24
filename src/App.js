@@ -849,6 +849,12 @@ export default function App() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) {
         return;
       }
+      // Backspace: 홈버튼 호출
+      if (e.code === 'Backspace') {
+        e.preventDefault();
+        window.location.reload();
+        return;
+      }
       if (e.code === 'Space') {
         // 마지막 테이크까지 재생이 끝난 후(즉, takes.length > 0이고 isPlaying/Paused/Loading 모두 false)
         if (takes.length > 0 && !isPlaying && !isPaused && !loading) {
