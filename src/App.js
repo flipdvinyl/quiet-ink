@@ -1441,6 +1441,13 @@ export default function App() {
     }
   }, []);
 
+  // 파일 내 적당한 위치에 추가
+  useEffect(() => {
+    if (takes.length > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [takes]);
+
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
       <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: theme.background, color: theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>
