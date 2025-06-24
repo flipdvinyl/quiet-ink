@@ -855,23 +855,23 @@ export default function App() {
         }
       }
       // Arrow Up/Down: 테이크 이동
-      const isArrowUp = e.code === 'ArrowUp' || e.code === 'Numpad8';
-      const isArrowDown = e.code === 'ArrowDown' || e.code === 'Numpad2';
-
-      if ((isArrowUp || isArrowDown) && takes.length > 0) {
-        e.preventDefault(); // 스크롤 방지
-        
-        let nextTake = currentTake;
-        if (isArrowUp) {
-          nextTake--;
-        } else { // isArrowDown
-          nextTake++;
-        }
-
-        if (nextTake >= 0 && nextTake < takes.length) {
-          handlePlayFromTake(nextTake);
-        }
-      }
+      //      const isArrowUp = e.code === 'ArrowUp' || e.code === 'Numpad8';
+      //      const isArrowDown = e.code === 'ArrowDown' || e.code === 'Numpad2';
+      //
+      //      if ((isArrowUp || isArrowDown) && takes.length > 0) {
+      //        e.preventDefault(); // 스크롤 방지
+      //        
+      //        let nextTake = currentTake;
+      //        if (isArrowUp) {
+      //          nextTake--;
+      //        } else { // isArrowDown
+      //          nextTake++;
+      //        }
+      //
+      //        if (nextTake >= 0 && nextTake < takes.length) {
+      //          handlePlayFromTake(nextTake);
+      //        }
+      //      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
