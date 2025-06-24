@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT } from './data/sampleTexts';
+import defaultPreset from './presets/defaultPreset';
 
 const PopupCard = ({
   isOpen,
@@ -111,11 +112,10 @@ export default function App() {
   const isLandscape = useMediaQuery('(orientation: landscape)');
   const isLargeScreen = useMediaQuery('(min-width: 1024px)');
   const isTabletPC = isLargeScreen || isLandscape;
-  const [containerWidth, setContainerWidth] = useState(() => isTabletPC ? 0.45 : 0.8);
+  // containerWidth, lineHeight는 프리셋에서 관리
   const [darkMode, setDarkMode] = useState(false);
   const takesContainerRef = useRef(null);
   const [uiHidden, setUiHidden] = useState(false);
-  const [lineHeightState, setLineHeightState] = useState(1.7);
   const [fontFamilyIndex, setFontFamilyIndex] = useState(0);
   const [showGptGuide, setShowGptGuide] = useState(false);
   const [isGptGuideClosing, setIsGptGuideClosing] = useState(false);
@@ -139,6 +139,21 @@ export default function App() {
   // 최신 isPaused 값을 참조하기 위한 ref
   const isPausedRef = useRef(isPaused);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 프리셋 상태 관리
+  const [preset, setPreset] = useState(() => {
+    try {
+      const saved = localStorage.getItem('audiobook-preset');
+      return saved ? JSON.parse(saved) : defaultPreset;
+    } catch {
+      return defaultPreset;
+    }
+  });
+  // 프리셋 변경 시 localStorage에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('audiobook-preset', JSON.stringify(preset));
+    } catch {}
+  }, [preset]);
 
   const iconButtonStyle = {
     width: 30,
@@ -172,10 +187,14 @@ export default function App() {
     );
   }, []);
 
-  // containerWidth를 화면 방향 변경에 따라 자동으로 조정
-  useEffect(() => {
-    setContainerWidth(isTabletPC ? 0.45 : 0.8);
-  }, [isTabletPC]);
+  // 화면 방향/크기 변경 시 문단폭을 프리셋에서 가져와 적용
+  const getContainerWidth = () => {
+    if (preset.containerWidth) {
+      return isTabletPC ? (preset.containerWidth.pc ?? 0.45) : (preset.containerWidth.mobile ?? 0.8);
+    }
+    return isTabletPC ? 0.45 : 0.8;
+  };
+  const containerWidth = getContainerWidth();
 
   // Voice ID 유효성 검사 함수
   const validateVoiceId = (text) => {
@@ -211,7 +230,16 @@ export default function App() {
     { name: '출판사 『무제』 사장', id: 'k3nWGietavXL1CA7oksXZ9', description: '은 베일에 싸여 있어요. 배우라는 설도 있지만 낭설일 뿐이지요. 『쓸 만한 인간』이라는 말도 들어요.' },
     { name: '송골매 기타리스트', id: '9BxbNLZ349CPuYpLUmBDYa', description: '가 누구인지 아는사람들 모여라~! 세상만사 모든일이 뜻대로야 되겠소만 어쩌다 마주친 그대처럼 우리 모두 다 사랑하리~' },
   ];
-  const [selectedVoice, setSelectedVoice] = useState(VOICES[Math.floor(Math.random() * VOICES.length)]);
+  // selectedVoice는 프리셋의 voice(name)와 동기화
+  const [selectedVoice, setSelectedVoice] = useState(() => {
+    const found = VOICES.find(v => v.name === (defaultPreset.voice || '책뚫남'));
+    return found || VOICES[0];
+  });
+  // 프리셋의 voice가 바뀌면 selectedVoice도 동기화
+  useEffect(() => {
+    const found = VOICES.find(v => v.name === preset.voice);
+    if (found && found !== selectedVoice) setSelectedVoice(found);
+  }, [preset.voice]);
 
   const lightTheme = {
     background: '#dcdcdc',
@@ -227,7 +255,7 @@ export default function App() {
     accent: '#90caf9',
     border: '#444',
   };
-  const theme = darkMode ? darkTheme : lightTheme;
+  const theme = preset.darkMode ? darkTheme : lightTheme;
 
   const fontFamilies = [
     'var(--font-mysteria)',
@@ -381,7 +409,7 @@ export default function App() {
   // 강조 표시된 텍스트를 렌더링하는 컴포넌트(항상 동일한 기준)
   const HighlightedText = ({ text, currentIndex, fontSize, isCurrentTake }) => {
     const words = splitIntoWords(text);
-    const isDark = darkMode;
+    const isDark = preset.darkMode;
     const effectiveFontSize = isTabletPC ? fontSize * 1.1 : fontSize;
     return (
       <span style={{
@@ -389,7 +417,7 @@ export default function App() {
         fontFamily: fontFamilies[fontFamilyIndex],
         fontSize: effectiveFontSize,
         color: isDark ? '#aaaaaa' : '#1d1d1d',
-        lineHeight: lineHeightState,
+        lineHeight: preset.lineHeight[isTabletPC ? 'pc' : 'mobile'],
         wordBreak: 'break-all',
         whiteSpace: 'pre-wrap',
         display: 'block',
@@ -798,24 +826,85 @@ export default function App() {
   };
 
   // 폰트 크기 조절
-  const handleFontSizeUp = () => setTakeFontSize(f => Math.min(f + 1, 64));
-  const handleFontSizeDown = () => setTakeFontSize(f => Math.max(f - 1, 8));
+  const handleFontSizeUp = () => setPreset(p => {
+    const key = isTabletPC ? 'pc' : 'mobile';
+    const cur = (typeof p.fontSize === 'object' ? p.fontSize[key] : p.fontSize) ?? 15;
+    return {
+      ...p,
+      fontSize: {
+        ...(typeof p.fontSize === 'object' ? p.fontSize : { mobile: p.fontSize ?? 15, pc: p.fontSize ?? 15 }),
+        [key]: Math.min(cur + 1, 64)
+      }
+    };
+  });
+  const handleFontSizeDown = () => setPreset(p => {
+    const key = isTabletPC ? 'pc' : 'mobile';
+    const cur = (typeof p.fontSize === 'object' ? p.fontSize[key] : p.fontSize) ?? 15;
+    return {
+      ...p,
+      fontSize: {
+        ...(typeof p.fontSize === 'object' ? p.fontSize : { mobile: p.fontSize ?? 15, pc: p.fontSize ?? 15 }),
+        [key]: Math.max(cur - 1, 8)
+      }
+    };
+  });
 
   // 폭 조절
-  const handleWidthUp = () => setContainerWidth(w => Math.min(w + 0.05, 0.9));
-  const handleWidthDown = () => setContainerWidth(w => Math.max(w - 0.05, 0.3));
+  const handleWidthUp = () => setPreset(p => {
+    const key = isTabletPC ? 'pc' : 'mobile';
+    const cur = p.containerWidth?.[key] ?? (isTabletPC ? 0.45 : 0.8);
+    return {
+      ...p,
+      containerWidth: {
+        ...p.containerWidth,
+        [key]: Math.min(cur + 0.05, 0.9)
+      }
+    };
+  });
+  const handleWidthDown = () => setPreset(p => {
+    const key = isTabletPC ? 'pc' : 'mobile';
+    const cur = p.containerWidth?.[key] ?? (isTabletPC ? 0.45 : 0.8);
+    return {
+      ...p,
+      containerWidth: {
+        ...p.containerWidth,
+        [key]: Math.max(cur - 0.05, 0.3)
+      }
+    };
+  });
 
   // 다크모드 토글
-  const handleToggleDark = () => setDarkMode(d => !d);
+  const handleToggleDark = () => setPreset(p => ({ ...p, darkMode: !p.darkMode }));
 
   // 테이크 텍스트 줄간격 상태
-  const handleLineHeightUp = () => setLineHeightState(lh => Math.max(lh - 0.1, 1));
-  const handleLineHeightDown = () => setLineHeightState(lh => Math.min(lh + 0.1, 3));
+  const handleLineHeightUp = () => setPreset(p => {
+    const key = isTabletPC ? 'pc' : 'mobile';
+    const cur = (typeof p.lineHeight === 'object' ? p.lineHeight[key] : p.lineHeight) ?? 1.7;
+    return {
+      ...p,
+      lineHeight: {
+        ...(typeof p.lineHeight === 'object' ? p.lineHeight : { mobile: p.lineHeight ?? 1.7, pc: p.lineHeight ?? 1.7 }),
+        [key]: Math.max(cur - 0.1, 1)
+      }
+    };
+  });
+  const handleLineHeightDown = () => setPreset(p => {
+    const key = isTabletPC ? 'pc' : 'mobile';
+    const cur = (typeof p.lineHeight === 'object' ? p.lineHeight[key] : p.lineHeight) ?? 1.7;
+    return {
+      ...p,
+      lineHeight: {
+        ...(typeof p.lineHeight === 'object' ? p.lineHeight : { mobile: p.lineHeight ?? 1.7, pc: p.lineHeight ?? 1.7 }),
+        [key]: Math.min(cur + 0.1, 3)
+      }
+    };
+  });
 
   // 폰트 패밀리 순환
   const handleFontFamilyToggle = () => {
-    const nextIndex = (fontFamilyIndex + 1) % fontFamilies.length;
-    setFontFamilyIndex(nextIndex);
+    const curIdx = fontFamilies.indexOf(preset.fontFamily);
+    const nextIndex = (curIdx + 1) % fontFamilies.length;
+    setPreset(p => ({ ...p, fontFamily: fontFamilies[nextIndex] }));
     document.documentElement.style.setProperty('--font-current', fontFamilies[nextIndex]);
     setShowFontName(false);  // 기존 애니메이션 즉시 종료
     setFontNameKey(prev => prev + 1);  // key 업데이트로 강제 리렌더링
@@ -837,12 +926,20 @@ export default function App() {
     if (!/user-scalable/.test(content)) content += (content ? ',' : '') + 'user-scalable=no';
     if (!/maximum-scale/.test(content)) content += (content ? ',' : '') + 'maximum-scale=1.0';
     meta.setAttribute('content', content);
+    // 폰트 프리셋 적용
+    document.documentElement.style.setProperty('--font-current', preset.fontFamily);
     // cleanup 불필요 (meta는 계속 유지)
-  }, []);
+  }, [preset.fontFamily]);
 
   // Space/Arrow 키로 소리내어 읽기, 일시정지/이어재생, 테이크 이동
   useEffect(() => {
     const onKeyDown = (e) => {
+      // Ctrl+K 또는 Cmd+K로 프리셋 리셋
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPreset(defaultPreset);
+        return;
+      }
       // Space: 최초 소리내어 읽기 or 일시정지/이어재생
       // 에디터(텍스트박스, textarea, input 등)에 포커스가 있으면 무시
       const tag = document.activeElement.tagName;
@@ -912,12 +1009,13 @@ export default function App() {
   const handleVoiceSelect = (voice) => {
     setIsClosing(true);
     setTimeout(() => {
-    setSelectedVoice(voice);
-    setVoiceMenuOpen(false);
+      setPreset(p => ({ ...p, voice: voice.name }));
+      setSelectedVoice(voice);
+      setVoiceMenuOpen(false);
       setIsClosing(false);
-    stopPlaying();
-    audioBufferRef.current = {}; // 버퍼 완전 초기화
-    setTimeout(() => handlePlayFromTake(currentTake, voice.id), 0);
+      stopPlaying();
+      audioBufferRef.current = {}; // 버퍼 완전 초기화
+      setTimeout(() => handlePlayFromTake(currentTake, voice.id), 0);
     }, 1000);
   };
 
@@ -1001,15 +1099,19 @@ export default function App() {
   });
 
   useEffect(() => {
-    document.body.style.background = theme.background;
-    // Set html background as well for overscroll (macOS/iOS)
-    document.documentElement.style.background = theme.background;
-    // Set overscroll background for iOS/macOS Safari
-    document.documentElement.style.webkitOverflowScrolling = 'touch';
-    document.documentElement.style.overscrollBehavior = 'none';
-    // Set CSS variable for possible use in global CSS
-    document.documentElement.style.setProperty('--app-background', theme.background);
-  }, [theme.background]);
+    // 다크/라이트 모드 전환 시 변경되는 모든 정보를 한 번에 처리
+    function setThemeByMode(dark) {
+      // body, html, overscroll 등 스타일 변경
+      const t = dark ? darkTheme : lightTheme;
+      document.body.style.background = t.background;
+      document.documentElement.style.background = t.background;
+      document.documentElement.style.webkitOverflowScrolling = 'touch';
+      document.documentElement.style.overscrollBehavior = 'none';
+      document.documentElement.style.setProperty('--app-background', t.background);
+    }
+    // 프리셋의 darkMode가 바뀔 때마다 테마 적용
+    setThemeByMode(preset.darkMode);
+  }, [preset.darkMode]);
 
 
   // 소재 데이터 구조화
@@ -1471,27 +1573,21 @@ export default function App() {
     if (!manuscriptInputRef.current) return;
     const textarea = manuscriptInputRef.current.querySelector('textarea');
     if (!textarea) return;
-
-    if (isSafari()) {
-      // Safari: 동적 줄간격 측정
-      const testDiv = document.createElement('div');
-      testDiv.style.position = 'absolute';
-      testDiv.style.visibility = 'hidden';
-      testDiv.style.pointerEvents = 'none';
-      testDiv.style.whiteSpace = 'pre';
-      testDiv.style.fontFamily = getComputedStyle(textarea).fontFamily;
-      testDiv.style.fontSize = getComputedStyle(textarea).fontSize;
-      testDiv.style.lineHeight = getComputedStyle(textarea).lineHeight;
-      testDiv.textContent = 'A\nB';
-      document.body.appendChild(testDiv);
-      const lh = testDiv.offsetHeight / 2;
-      document.body.removeChild(testDiv);
-      textarea.style.backgroundImage = `repeating-linear-gradient(to bottom, transparent, transparent ${lh - 1}px, rgba(128,128,128,0.2) ${lh}px, rgba(128,128,128,0.2) ${lh}px)`;
-    } else {
-      // Chrome 등: 기존 고정값
-      textarea.style.backgroundImage = 'repeating-linear-gradient(to bottom, transparent, transparent 27.8px, rgba(128,128,128,0.2) 28.8px, rgba(128,128,128,0.2) 28.8px)';
-    }
-  }, [takeFontSize, lineHeightState, fontFamilyIndex]);
+    // 모든 브라우저에서 동적 줄간격 측정
+    const testDiv = document.createElement('div');
+    testDiv.style.position = 'absolute';
+    testDiv.style.visibility = 'hidden';
+    testDiv.style.pointerEvents = 'none';
+    testDiv.style.whiteSpace = 'pre';
+    testDiv.style.fontFamily = getComputedStyle(textarea).fontFamily;
+    testDiv.style.fontSize = getComputedStyle(textarea).fontSize;
+    testDiv.style.lineHeight = getComputedStyle(textarea).lineHeight;
+    testDiv.textContent = 'A\nB';
+    document.body.appendChild(testDiv);
+    const lh = testDiv.offsetHeight / 2;
+    document.body.removeChild(testDiv);
+    textarea.style.backgroundImage = `repeating-linear-gradient(to bottom, transparent, transparent ${lh - 1}px, rgba(128,128,128,0.2) ${lh}px, rgba(128,128,128,0.2) ${lh}px)`;
+  }, [takeFontSize, preset.lineHeight, fontFamilyIndex]);
 
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
@@ -1535,13 +1631,13 @@ export default function App() {
               {/* 삼각형 1 */}
               <polygon
                 points="0,0 100,0 0,65"
-                fill={darkMode ? '#111111' : '#cccccc'}
+                fill={preset.darkMode ? '#111111' : '#cccccc'}
                 style={{ transition: 'fill 0.3s' }}
               />
               {/* 삼각형 2 */}
               <polygon
                 points="100,0 0,65 70,84"
-                fill={darkMode ? '#222222' : '#efefef'}
+                fill={preset.darkMode ? '#222222' : '#efefef'}
                 style={{
                   filter: 'drop-shadow(3px 3px 30px rgba(128,128,128,0.3))',
                   transition: 'fill 0.3s',
@@ -1790,7 +1886,7 @@ export default function App() {
             onChange={e => setText(e.target.value)}
             inputRef={input => { window._mainTextField = input; }}
             InputLabelProps={{ style: { color: theme.text } }}
-            InputProps={{ style: { color: theme.text, background: 'transparent', lineHeight: lineHeightState, border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px' } }}
+            InputProps={{ style: { color: theme.text, background: 'transparent', fontSize: 15, lineHeight: 1.7, border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px' } }}
             sx={{
               '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
             }}
@@ -1964,7 +2060,7 @@ export default function App() {
                 key={take.name}
                 className={index === currentTake ? 'current-take' : ''}
                 sx={{
-                  mb: `${lineHeightState}rem`,
+                  mb: `${preset.lineHeight[isTabletPC ? 'pc' : 'mobile']}rem`,
                   pb: 0,
                   cursor: 'pointer',
                   borderRadius: '8px',
@@ -1981,7 +2077,7 @@ export default function App() {
                     <HighlightedText
                       text={take.text}
                       currentIndex={-1}
-                      fontSize={takeFontSize}
+                      fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
                       isCurrentTake={index === currentTake}
                     />
                   </Box>
@@ -1989,7 +2085,7 @@ export default function App() {
                   <HighlightedText
                     text={take.text}
                     currentIndex={index === currentTake && isPlaying && isAudioPlaying ? currentWordIndex : -1}
-                    fontSize={takeFontSize}
+                    fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
                     isCurrentTake={index === currentTake}
                   />
                 )}
@@ -2008,7 +2104,7 @@ export default function App() {
               <Box 
                 onClick={handleDiceClick}
                 sx={{ 
-                  fontSize: `${takeFontSize * 3}px`,
+                  fontSize: `${(preset.fontSize[isTabletPC ? 'pc' : 'mobile'] ?? 15) * 3}px`,
                   cursor: 'pointer',
                   fontWeight: 100, // 가장 얇은 두께
                   opacity: isRollingDice ? 1 : 0.2,
@@ -2403,7 +2499,7 @@ export default function App() {
               }}>
               {(() => {
                 let fontName;
-                switch (fontFamilies[fontFamilyIndex]) {
+                switch (preset.fontFamily) {
                   case 'var(--font-type32)':
                     fontName = '서른둘체';
                     break;
