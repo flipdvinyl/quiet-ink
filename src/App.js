@@ -1448,6 +1448,45 @@ export default function App() {
     }
   }, [takes]);
 
+  // 1. Add a ref for the TextField
+  const manuscriptInputRef = useRef();
+
+  // 2. Add a state for the measured line height
+  const [measuredLineHeight, setMeasuredLineHeight] = useState(28); // default fallback
+
+  // Safari detection function
+  const isSafari = () => {
+    const ua = navigator.userAgent;
+    return /^((?!chrome|android).)*safari/i.test(ua);
+  };
+
+  // 3. Effect: measure line height and set background pattern (Safari only)
+  useEffect(() => {
+    if (!manuscriptInputRef.current) return;
+    const textarea = manuscriptInputRef.current.querySelector('textarea');
+    if (!textarea) return;
+
+    if (isSafari()) {
+      // Safari: 동적 줄간격 측정
+      const testDiv = document.createElement('div');
+      testDiv.style.position = 'absolute';
+      testDiv.style.visibility = 'hidden';
+      testDiv.style.pointerEvents = 'none';
+      testDiv.style.whiteSpace = 'pre';
+      testDiv.style.fontFamily = getComputedStyle(textarea).fontFamily;
+      testDiv.style.fontSize = getComputedStyle(textarea).fontSize;
+      testDiv.style.lineHeight = getComputedStyle(textarea).lineHeight;
+      testDiv.textContent = 'A\nB';
+      document.body.appendChild(testDiv);
+      const lh = testDiv.offsetHeight / 2;
+      document.body.removeChild(testDiv);
+      textarea.style.backgroundImage = `repeating-linear-gradient(to bottom, transparent, transparent ${lh - 1}px, rgba(128,128,128,0.2) ${lh}px, rgba(128,128,128,0.2) ${lh}px)`;
+    } else {
+      // Chrome 등: 기존 고정값
+      textarea.style.backgroundImage = 'repeating-linear-gradient(to bottom, transparent, transparent 27.8px, rgba(128,128,128,0.2) 28.8px, rgba(128,128,128,0.2) 28.8px)';
+    }
+  }, [takeFontSize, lineHeightState, fontFamilyIndex]);
+
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
       <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: theme.background, color: theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>
@@ -1736,16 +1775,16 @@ export default function App() {
               )}
             </Box>
             <Box sx={{ width: '82vw', maxWidth: '100%', height: 0, borderTop: `1px solid ${theme.text}66`, margin: '5px auto 0 auto' }} />
-        <Box sx={{ position: 'relative', mt: 3 }}>
+        <Box sx={{ position: 'relative', mt: 3 }} ref={manuscriptInputRef}>
           <TextField
             fullWidth
             multiline
             minRows={5}
             value={text}
             onChange={e => setText(e.target.value)}
-                inputRef={input => { window._mainTextField = input; }}
+            inputRef={input => { window._mainTextField = input; }}
             InputLabelProps={{ style: { color: theme.text } }}
-            InputProps={{ style: { color: theme.text, background: 'transparent', lineHeight: '1.8', border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px', backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 27.8px, rgba(128,128,128,0.2) 28.8px, rgba(128,128,128,0.2) 28.8px)' } }}
+            InputProps={{ style: { color: theme.text, background: 'transparent', lineHeight: lineHeightState, border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px' } }}
             sx={{
               '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
             }}
