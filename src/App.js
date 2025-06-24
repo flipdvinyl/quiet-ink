@@ -136,6 +136,9 @@ export default function App() {
   const isUnloadingRef = useRef(false);
   // iOS 오디오 정책 우회용: 최초 1회 무음 재생
   const mutePlayedRef = useRef(false);
+  // 최신 isPaused 값을 참조하기 위한 ref
+  const isPausedRef = useRef(isPaused);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   const iconButtonStyle = {
     width: 30,
@@ -511,7 +514,8 @@ export default function App() {
       return;
     }
     if (isPaused && currentAudio.current) {
-      currentAudio.current.play();
+      // play()가 실패해도(오디오 준비 안됨 등) 에러 무시
+      currentAudio.current.play().catch(() => {});
       setIsPaused(false);
       setIsPlaying(true);
       return;
@@ -680,17 +684,19 @@ export default function App() {
       setCurrentAudioState(audio);
       audio.src = audioUrl;
       audio.load();
-      audio.play()
-        .then(() => {
-          console.log(`Successfully started playing take ${takeIndex}`);
-          if (takeIndex < takesRef.current.length - 1) {
-            const { signal } = ttsAbortControllerRef.current || { signal: undefined };
-            prepareNextTake(takeIndex + 1, null, signal);
-          }
-        })
-        .catch(error => {
-          console.error(`Error playing take ${takeIndex}:`, error);
-        });
+      if (!isPausedRef.current) {
+        audio.play()
+          .then(() => {
+            console.log(`Successfully started playing take ${takeIndex}`);
+            if (takeIndex < takesRef.current.length - 1) {
+              const { signal } = ttsAbortControllerRef.current || { signal: undefined };
+              prepareNextTake(takeIndex + 1, null, signal);
+            }
+          })
+          .catch(error => {
+            console.error(`Error playing take ${takeIndex}:`, error);
+          });
+      }
     } catch (e) {
       console.error(`Error setting up audio for take ${takeIndex}:`, e);
     }
