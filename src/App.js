@@ -848,6 +848,10 @@ export default function App() {
       if (e.code === 'Space') {
         if (takes.length === 0 && !isPlaying && !isPaused && !loading) {
           e.preventDefault();
+          if (!text) {
+            MATERIALS.randomAny.handler(e);
+            return;
+          }
           handleTTS();
         } else if (isPlaying || isPaused) {
           e.preventDefault();
