@@ -2473,6 +2473,10 @@ export default function App() {
         <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleToggleDark}>
           <span>●</span>
         </Box>
+        {/* DIM 처리된 테이크 공유(가위) 아이콘 */}
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%', opacity: 0.7, pointerEvents: 'none' }}>
+          <span>✄</span>
+        </Box>
         <Box sx={{ ...iconButtonStyle, fontSize: '80%', position: 'relative' }} onClick={handleFontFamilyToggle}>
           <span>ㄱ</span>
           {showFontName && (
