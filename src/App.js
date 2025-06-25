@@ -1518,25 +1518,29 @@ export default function App() {
   useEffect(() => {
     const handleLoad = () => {
       // Mysteria
-      const mysteria = new window.FontFace(
-        'Mysteria',
-        "url('./assets/Mysteria-Regular.otf') format('opentype')"
-      );
+      if (!document.fonts.check('1em Mysteria')) {
+        const mysteria = new window.FontFace(
+          'Mysteria',
+          "url('./assets/Mysteria-Regular.otf') format('opentype')"
+        );
+        mysteria.load().then(font => document.fonts.add(font)).catch(() => {});
+      }
       // TYPEThirtytwo
-      const type32 = new window.FontFace(
-        'TYPEThirtytwo',
-        "url('./assets/TYPEThirtytwo.otf') format('opentype')"
-      );
+      if (!document.fonts.check('1em TYPEThirtytwo')) {
+        const type32 = new window.FontFace(
+          'TYPEThirtytwo',
+          "url('./assets/TYPEThirtytwo.otf') format('opentype')"
+        );
+        type32.load().then(font => document.fonts.add(font)).catch(() => {});
+      }
       // Eulyoo1945 (woff2 우선)
-      const eulyoo = new window.FontFace(
-        'Eulyoo1945',
-        "url('./assets/Eulyoo1945-Regular.woff2') format('woff2'), url('./assets/Eulyoo1945-Regular.woff') format('woff'), url('./assets/Eulyoo1945-Regular.eot') format('embedded-opentype')"
-      );
-      Promise.all([
-        mysteria.load().then(font => document.fonts.add(font)).catch(() => {}),
-        type32.load().then(font => document.fonts.add(font)).catch(() => {}),
-        eulyoo.load().then(font => document.fonts.add(font)).catch(() => {}),
-      ]);
+      if (!document.fonts.check('1em Eulyoo1945')) {
+        const eulyoo = new window.FontFace(
+          'Eulyoo1945',
+          "url('./assets/Eulyoo1945-Regular.woff2') format('woff2'), url('./assets/Eulyoo1945-Regular.woff') format('woff'), url('./assets/Eulyoo1945-Regular.eot') format('embedded-opentype')"
+        );
+        eulyoo.load().then(font => document.fonts.add(font)).catch(() => {});
+      }
     };
     window.addEventListener('load', handleLoad);
     return () => window.removeEventListener('load', handleLoad);
@@ -2476,7 +2480,7 @@ export default function App() {
           <span>●</span>
         </Box>
         {/* DIM 처리된 테이크 공유(가위) 아이콘 */}
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%', opacity: 0.7, pointerEvents: 'none' }}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%', opacity: 0.7, pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
           <span>✄</span>
         </Box>
         <Box sx={{ ...iconButtonStyle, fontSize: '80%', position: 'relative' }} onClick={handleFontFamilyToggle}>
