@@ -2251,6 +2251,7 @@ export default function App() {
                     {selectedVoice.name}
                   </span>
                   님이
+                  {' '}
                   <span
                     style={{
                       textDecoration: 'underline',
@@ -2280,6 +2281,7 @@ export default function App() {
                     {selectedVoice.name}
                   </span>
                   님이
+                  {' '}
                   <span
                     style={{
                       textDecoration: 'underline',
