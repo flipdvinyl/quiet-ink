@@ -6,7 +6,7 @@ import {
   Alert, Fade, Backdrop
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT } from './data/sampleTexts';
+import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT } from './data/sampleTexts_.js';
 import defaultPreset from './presets/defaultPreset';
 
 const PopupCard = ({
@@ -226,6 +226,7 @@ export default function App() {
     { name: '미술관 도슨트', id: '0f7ccb849f108608620302', description: '는 예술과 당신 사이의 안내자예요. 자연과 예술, 시간과 사유를 연결하는 자리에 늘 함께 있어요.' },
     { name: '박물관 사서', id: 'eb5e0f9308248300915305', description: '눈에 띄지 않게 조용히 책 사이를 오가며, 누군가의 하루에 맞는 문장을 골라줘요.' },
     { name: '진지한 케일리', id: 'weKbNjMh2V5MuXziwHwjoT', description: '는 회사 스튜디오에서 우연히 목소리를 녹음 했어요. 연기엔 자신 있었다지만 누가 봐도 또박또박 읽고 있지요.' },
+    { name: '릭 루빈', id: 'nNkPFG9fioPzmsxGpawKbv', description: '은 화려한 테크닉보다 감각과 직관을 믿는 사람이에요. 명상으로 마음을 비우고, 음악의 본질만을 담아내는 전설적인 프로듀서죠.' },
     { name: '이석원', id: '6ay4URFxK9bry6z7zMDBLP', description: '은 말보다 침묵에 가까운 사람이지요. 그의 시선엔 쓸쓸함과 따뜻함이 함께 있고, 목소리는 그의 노래처럼 차분하고 조용하지만 오래 남거든요.' },
     { name: '출판사 『무제』 사장', id: 'k3nWGietavXL1CA7oksXZ9', description: '은 베일에 싸여 있어요. 배우라는 설도 있지만 낭설일 뿐이지요. 『쓸 만한 인간』이라는 말도 들어요.' },
     { name: '송골매 기타리스트', id: '9BxbNLZ349CPuYpLUmBDYa', description: '가 누구인지 아는사람들 모여라~! 세상만사 모든일이 뜻대로야 되겠소만 어쩌다 마주친 그대처럼 우리 모두 다 사랑하리~' },
@@ -1129,6 +1130,14 @@ export default function App() {
         setText(SAMPLE_NEWS_LIST[randomIndex]);
       }
     },
+    wayofcode: {
+      name: "THE WAY OF CODE",
+      list: [WAYOFCODE_TEXT],
+      handler: (e) => {
+        e.preventDefault();
+          setText(WAYOFCODE_TEXT);
+        }
+    },
     literature: {
       name: "예술책 한 페이지",
       list: LITERATURE_QUOTES,
@@ -1807,6 +1816,11 @@ export default function App() {
                   label: '- 수퍼톤 소식',
                   text: '수퍼톤 소식',
                   onClick: handleRandomNews
+                },
+                {
+                  label: '- THE WAY OF CODE',
+                  text: 'THE WAY OF CODE',
+                  onClick: MATERIALS.wayofcode.handler
                 }
               ];
               if (isTabletPC) {

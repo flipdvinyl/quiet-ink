@@ -1,3 +1,10 @@
 {
-	"folders": []
+	"folders": [
+		{
+			"path": "../../llm-api"
+		},
+		{
+			"path": ".."
+		}
+	]
 }
