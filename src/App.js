@@ -259,10 +259,13 @@ export default function App() {
   const theme = preset.darkMode ? darkTheme : lightTheme;
 
   const fontFamilies = [
-    'var(--font-mysteria)',
-    'var(--font-type32)',
-    'var(--font-system)',
-    'var(--font-serif)'
+    'var(--font-mysteria)', // 지백체
+    'var(--font-type32)',   // 서른둘체
+    'var(--font-serif)',    // 을유1945체
+    'var(--font-roehoe)',   // 노회찬체
+    'var(--font-exqt)',     // exqt체
+    'var(--font-sam3kr)',   // 삼국지3체
+    'var(--font-system)'    // 시스템기본서체
   ];
 
   const selectedVoiceRef = useRef(selectedVoice);
@@ -2524,14 +2527,23 @@ export default function App() {
               {(() => {
                 let fontName;
                 switch (preset.fontFamily) {
+                  case 'var(--font-mysteria)':
+                    fontName = '지백체';
+                    break;
                   case 'var(--font-type32)':
                     fontName = '서른둘체';
                     break;
                   case 'var(--font-serif)':
                     fontName = '을유1945체';
                     break;
-                  case 'var(--font-mysteria)':
-                    fontName = '지백체';
+                  case 'var(--font-roehoe)':
+                    fontName = '노회찬체';
+                    break;
+                  case 'var(--font-exqt)':
+                    fontName = 'exqt체';
+                    break;
+                  case 'var(--font-sam3kr)':
+                    fontName = '삼국지3체';
                     break;
                   case 'var(--font-system)':
                     fontName = '시스템기본서체';

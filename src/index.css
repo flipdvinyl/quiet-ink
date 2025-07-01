@@ -18,6 +18,24 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: 'ROEHOE-CHAN';
+  src: url('./assets/ROEHOE-CHAN.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'exqt';
+  src: url('./assets/exqt.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Sam3KRFont';
+  src: url('./assets/Sam3KRFont.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;300;400;500;600;700;900&display=swap');
 
 :root {
@@ -25,6 +43,9 @@
   --font-type32: 'TYPEThirtytwo', sans-serif;
   --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
   --font-serif: 'Eulyoo1945', serif;
+  --font-roehoe: 'ROEHOE-CHAN', sans-serif;
+  --font-exqt: 'exqt', sans-serif;
+  --font-sam3kr: 'Sam3KRFont', sans-serif;
   --font-current: var(--font-mysteria);
 }
 body, html, #root, * {
