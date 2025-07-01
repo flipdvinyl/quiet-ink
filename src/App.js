@@ -330,47 +330,56 @@ export default function App() {
   const splitTextIntoTakes = (text) => {
     const maxLength = 200;
     const takes = [];
-    let remainingText = text;
     let takeNumber = 1;
 
-    while (remainingText.length > 0) {
-      // 200자 이하의 텍스트는 그대로 사용
-      if (remainingText.length <= maxLength) {
-              takes.push({
-        text: remainingText,
-        displayText: convertTextForDisplay(remainingText),
-        name: `Take_${takeNumber}`
-      });
-        break;
+    // 1차 분할: 공백/탭만 있는 줄이 2번 이상 연속될 때마다 분할
+    const blocks = text.split(/(?:[ \t]*\r?\n){2,}/);
+
+    for (let block of blocks) {
+      let remainingText = block.trim();
+      // 빈 블록도 테이크로 추가
+      if (remainingText.length === 0) {
+        takes.push({
+          text: '',
+          displayText: '',
+          name: `Take_${takeNumber}`
+        });
+        takeNumber++;
+        continue;
       }
-
-      // 200자 단위로 자를 때 마침표, 느낌표, 물음표, 물결(~) 우선, 없으면 공백
-      let cutIndex = maxLength;
-      const lastPeriod = remainingText.lastIndexOf('.', maxLength);
-      const lastExclam = remainingText.lastIndexOf('!', maxLength);
-      const lastQuestion = remainingText.lastIndexOf('?', maxLength);
-      const lastTilde = remainingText.lastIndexOf('~', maxLength);
-      const lastSpace = remainingText.lastIndexOf(' ', maxLength);
-
-      // 우선순위: . ! ? ~
-      const candidates = [lastPeriod, lastExclam, lastQuestion, lastTilde].filter(idx => idx > 0);
-      if (candidates.length > 0) {
-        cutIndex = Math.max(...candidates) + 1;
-      } else if (lastSpace > 0) {
-        cutIndex = lastSpace;
+      while (remainingText.length > 0) {
+        if (remainingText.length <= maxLength) {
+          takes.push({
+            text: remainingText,
+            displayText: convertTextForDisplay(remainingText),
+            name: `Take_${takeNumber}`
+          });
+          break;
+        }
+        // 기존 로직: 마침표, 느낌표, 물음표, 물결(~) 우선, 없으면 공백
+        let cutIndex = maxLength;
+        const lastPeriod = remainingText.lastIndexOf('.', maxLength);
+        const lastExclam = remainingText.lastIndexOf('!', maxLength);
+        const lastQuestion = remainingText.lastIndexOf('?', maxLength);
+        const lastTilde = remainingText.lastIndexOf('~', maxLength);
+        const lastSpace = remainingText.lastIndexOf(' ', maxLength);
+        const candidates = [lastPeriod, lastExclam, lastQuestion, lastTilde].filter(idx => idx > 0);
+        if (candidates.length > 0) {
+          cutIndex = Math.max(...candidates) + 1;
+        } else if (lastSpace > 0) {
+          cutIndex = lastSpace;
+        }
+        const takeText = remainingText.slice(0, cutIndex).trim();
+        takes.push({
+          text: takeText,
+          displayText: convertTextForDisplay(takeText),
+          name: `Take_${takeNumber}`
+        });
+        remainingText = remainingText.slice(cutIndex).trim();
+        takeNumber++;
       }
-
-      const takeText = remainingText.slice(0, cutIndex).trim();
-      takes.push({
-        text: takeText,
-        displayText: convertTextForDisplay(takeText),
-        name: `Take_${takeNumber}`
-      });
-
-      remainingText = remainingText.slice(cutIndex).trim();
       takeNumber++;
     }
-
     return takes;
   };
 
