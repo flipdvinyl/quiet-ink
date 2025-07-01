@@ -459,6 +459,11 @@ export default function App() {
 
   // 텍스트를 단어 단위로 분할(문장기호는 인접 단어와 합침, 가중치 부여)
   const splitIntoWords = (text) => {
+    // text가 문자열이 아닌 경우 빈 배열 반환
+    if (typeof text !== 'string') {
+      console.warn('splitIntoWords: text is not a string:', text);
+      return [];
+    }
     // 단어+문장기호를 하나의 토큰으로 합침
     const wordRegex = /[^\s.,!?]+[.,!?]?|[.,!?]/g;
     const rawWords = text.match(wordRegex) || [];
@@ -504,8 +509,18 @@ export default function App() {
 
   // 강조 표시된 텍스트를 렌더링하는 컴포넌트(항상 동일한 기준)
   const HighlightedText = ({ text, currentIndex, fontSize, isCurrentTake }) => {
-    // text가 이미 displayText인 경우 그대로 사용, 아니면 변환
-    const displayText = text.displayText || convertTextForDisplay(text);
+    // text가 문자열인지 객체인지 확인하고 안전하게 처리
+    let displayText;
+    if (typeof text === 'string') {
+      displayText = convertTextForDisplay(text);
+    } else if (text && typeof text === 'object' && text.displayText) {
+      displayText = text.displayText;
+    } else if (text && typeof text === 'object' && text.text) {
+      displayText = convertTextForDisplay(text.text);
+    } else {
+      console.warn('HighlightedText: invalid text prop:', text);
+      displayText = '';
+    }
     const words = splitIntoWords(displayText);
     const isDark = preset.darkMode;
     const effectiveFontSize = isTabletPC ? fontSize * 1.1 : fontSize;
@@ -556,7 +571,7 @@ export default function App() {
 
   // TTS 변환 함수 - 오디오 URL만 생성
   const convertToSpeech = async (take, voiceId, signal) => {
-    const useVoiceId = voiceId || selectedVoiceRef.current.id;
+    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     try {
       console.log(`Converting Take: ${take.name}`);
       // API 호출용 텍스트로 변환 (AAA::BBB::CCC 형식 처리)
@@ -591,7 +606,7 @@ export default function App() {
 
   // 다음 Take 미리 생성
   const prepareNextTake = async (nextIndex, voiceId, signal) => {
-    const useVoiceId = voiceId || selectedVoiceRef.current.id;
+    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     if (nextIndex >= takesRef.current.length || audioBufferRef.current[nextIndex]) {
       console.log(`Skip preparing take ${nextIndex}: ${nextIndex >= takesRef.current.length ? 'end of takes' : 'already in buffer'}`);
       return;
@@ -892,7 +907,7 @@ export default function App() {
 
     setLoading(true);
     setIsPlaying(true);
-    const useVoiceId = voiceId || selectedVoiceRef.current.id;
+    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     try {
       setFadeIn(true);
       setGeneratingTake(startIndex);
