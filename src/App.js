@@ -610,6 +610,11 @@ export default function App() {
         }
         return currentGeneratingTake; // 다른 테이크가 생성 중이면 그대로 둠
       });
+      // 오디오 생성 완료 시점에 자동재생 대기 플래그 확인
+      if (autoPlayPendingIndexRef.current === nextIndex) {
+        playTake(nextIndex, signal);
+        setAutoPlayPending(null);
+      }
     } catch (e) {
       if (e.name !== 'AbortError') {
         console.error(`Take ${nextIndex} 생성 실패:`, e);
@@ -753,11 +758,11 @@ export default function App() {
       return;
     }
     const audioUrl = audioBufferRef.current[takeIndex];
-    console.log(`Playing take ${takeIndex}, URL: ${audioUrl}`);
     if (!audioUrl) {
-      console.error(`No audio buffer found for take ${takeIndex}`);
+      setAutoPlayPending(takeIndex);
       return;
     }
+    console.log(`Playing take ${takeIndex}, URL: ${audioUrl}`);
     try {
       // === 변경: Audio 객체를 재사용 ===
       let audio = currentAudio.current;
@@ -1702,6 +1707,13 @@ export default function App() {
     document.body.removeChild(testDiv);
     textarea.style.backgroundImage = `repeating-linear-gradient(to bottom, transparent, transparent ${lh - 1}px, rgba(128,128,128,0.2) ${lh}px, rgba(128,128,128,0.2) ${lh}px)`;
   }, [takeFontSize, preset.lineHeight, fontFamilyIndex]);
+
+  const autoPlayPendingIndexRef = useRef(null);
+  const [autoPlayPendingIndex, setAutoPlayPendingIndex] = useState(null);
+  const setAutoPlayPending = (idx) => {
+    autoPlayPendingIndexRef.current = idx;
+    setAutoPlayPendingIndex(idx);
+  };
 
   return (
     <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
