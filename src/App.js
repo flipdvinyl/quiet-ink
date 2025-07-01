@@ -1226,6 +1226,7 @@ export default function App() {
     news: {
       name: "수퍼톤 소식",
       list: SAMPLE_NEWS_LIST,
+      voiceMapping: null, // 랜덤 목소리
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1234,19 +1235,31 @@ export default function App() {
           randomIndex = Math.floor(Math.random() * SAMPLE_NEWS_LIST.length);
         } while (SAMPLE_NEWS_LIST[randomIndex] === currentText);
         setText(SAMPLE_NEWS_LIST[randomIndex]);
+        // 랜덤 목소리 선택
+        const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
+        setPreset(p => ({ ...p, voice: randomVoice.name }));
+        setSelectedVoice(randomVoice);
       }
     },
     wayofcode: {
       name: "THE WAY OF CODE",
       list: [WAYOFCODE_TEXT],
+      voiceMapping: "릭 루빈",
       handler: (e) => {
         e.preventDefault();
-          setText(WAYOFCODE_TEXT);
+        setText(WAYOFCODE_TEXT);
+        // 릭 루빈 목소리로 변경
+        const rickVoice = VOICES.find(v => v.name === "릭 루빈");
+        if (rickVoice) {
+          setPreset(p => ({ ...p, voice: rickVoice.name }));
+          setSelectedVoice(rickVoice);
         }
+      }
     },
     literature: {
       name: "예술책 한 페이지",
       list: LITERATURE_QUOTES,
+      voiceMapping: null, // 랜덤 목소리
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1255,11 +1268,16 @@ export default function App() {
           randomIndex = Math.floor(Math.random() * LITERATURE_QUOTES.length);
         } while (LITERATURE_QUOTES[randomIndex] === currentText);
         setText(LITERATURE_QUOTES[randomIndex]);
+        // 랜덤 목소리 선택
+        const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
+        setPreset(p => ({ ...p, voice: randomVoice.name }));
+        setSelectedVoice(randomVoice);
       }
     },
     musiccamp: {
       name: "배철수의 음악캠프 오프닝",
       list: MUSICCAMP_QUOTES,
+      voiceMapping: "송골매 기타리스트",
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1268,27 +1286,48 @@ export default function App() {
           randomIndex = Math.floor(Math.random() * MUSICCAMP_QUOTES.length);
         } while (MUSICCAMP_QUOTES[randomIndex] === currentText);
         setText(MUSICCAMP_QUOTES[randomIndex]);
+        // 송골매 기타리스트 목소리로 변경
+        const guitarVoice = VOICES.find(v => v.name === "송골매 기타리스트");
+        if (guitarVoice) {
+          setPreset(p => ({ ...p, voice: guitarVoice.name }));
+          setSelectedVoice(guitarVoice);
+        }
       }
     },
     essay: {
       name: "보통의 존재",
       list: [ESSAY_TEXT],
+      voiceMapping: "이석원",
       handler: (e) => {
         e.preventDefault();
-          setText(ESSAY_TEXT);
+        setText(ESSAY_TEXT);
+        // 이석원 목소리로 변경
+        const seokwonVoice = VOICES.find(v => v.name === "이석원");
+        if (seokwonVoice) {
+          setPreset(p => ({ ...p, voice: seokwonVoice.name }));
+          setSelectedVoice(seokwonVoice);
+        }
       }
     },
     sonagi: {
       name: "소나기",
       list: [SONAGI_TEXT],
+      voiceMapping: "출판사 『무제』 사장",
       handler: (e) => {
         e.preventDefault();
-          setText(SONAGI_TEXT);
+        setText(SONAGI_TEXT);
+        // 출판사 무제 사장 목소리로 변경
+        const publisherVoice = VOICES.find(v => v.name === "출판사 『무제』 사장");
+        if (publisherVoice) {
+          setPreset(p => ({ ...p, voice: publisherVoice.name }));
+          setSelectedVoice(publisherVoice);
         }
+      }
     },
     randomAny: {
       name: "아무 글이나",
       list: [],
+      voiceMapping: null, // 동적으로 결정
       handler: (e) => {
         e.preventDefault();
         // 모든 소재의 모든 글감을 하나의 배열로
@@ -1307,7 +1346,30 @@ export default function App() {
           randomText = allTexts[Math.floor(Math.random() * allTexts.length)];
         } while (randomText === text && allTexts.length > 1);
 
+        // 선택된 텍스트가 속한 소재 찾기
+        const materialEntry = Object.entries(MATERIALS).find(([key, material]) => 
+          key !== 'randomAny' && material.list && material.list.includes(randomText)
+        );
+
         setText(randomText);
+        
+        // 해당 소재의 목소리 매핑 적용
+        if (materialEntry) {
+          const material = materialEntry[1];
+          if (material.voiceMapping) {
+            // 특정 목소리가 매핑된 경우
+            const mappedVoice = VOICES.find(v => v.name === material.voiceMapping);
+            if (mappedVoice) {
+              setPreset(p => ({ ...p, voice: mappedVoice.name }));
+              setSelectedVoice(mappedVoice);
+            }
+          } else {
+            // 랜덤 목소리인 경우
+            const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
+            setPreset(p => ({ ...p, voice: randomVoice.name }));
+            setSelectedVoice(randomVoice);
+          }
+        }
       }
     }
   };
@@ -1507,6 +1569,21 @@ export default function App() {
       setText(newText);
       if (materialEntry) {
         setTitle(materialEntry[1].name);
+        // 해당 소재의 목소리 매핑 적용
+        const material = materialEntry[1];
+        if (material.voiceMapping) {
+          // 특정 목소리가 매핑된 경우
+          const mappedVoice = VOICES.find(v => v.name === material.voiceMapping);
+          if (mappedVoice) {
+            setPreset(p => ({ ...p, voice: mappedVoice.name }));
+            setSelectedVoice(mappedVoice);
+          }
+        } else {
+          // 랜덤 목소리인 경우
+          const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
+          setPreset(p => ({ ...p, voice: randomVoice.name }));
+          setSelectedVoice(randomVoice);
+        }
       }
       console.log('텍스트 변경됨:', newText);
 
