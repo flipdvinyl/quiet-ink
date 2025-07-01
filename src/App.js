@@ -6,7 +6,7 @@ import {
   Alert, Fade, Backdrop
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT } from './data/sampleTexts_.js';
+import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT } from './data/sampleTexts.js';
 import defaultPreset from './presets/defaultPreset';
 
 const PopupCard = ({
@@ -336,10 +336,11 @@ export default function App() {
     while (remainingText.length > 0) {
       // 200자 이하의 텍스트는 그대로 사용
       if (remainingText.length <= maxLength) {
-        takes.push({
-          text: remainingText,
-          name: `Take_${takeNumber}`
-        });
+              takes.push({
+        text: remainingText,
+        displayText: convertTextForDisplay(remainingText),
+        name: `Take_${takeNumber}`
+      });
         break;
       }
 
@@ -359,8 +360,10 @@ export default function App() {
         cutIndex = lastSpace;
       }
 
+      const takeText = remainingText.slice(0, cutIndex).trim();
       takes.push({
-        text: remainingText.slice(0, cutIndex).trim(),
+        text: takeText,
+        displayText: convertTextForDisplay(takeText),
         name: `Take_${takeNumber}`
       });
 
@@ -369,6 +372,80 @@ export default function App() {
     }
 
     return takes;
+  };
+
+  // AAA::BBB::CCC 형식을 파싱하는 함수
+  const parseSpecialFormat = (text) => {
+    // 정확히 두 개의 ::가 있는 패턴을 찾는 정규식
+    // AAA::BBB::CCC, AAA::BBB::, 또는 :::: 형식 모두 처리
+    const specialFormatRegex = /([^::\s]*::[^::\s]*::)/g;
+    const matches = [];
+    let match;
+    
+    console.log('파싱 시작 - 텍스트:', text);
+    
+    while ((match = specialFormatRegex.exec(text)) !== null) {
+      const fullMatch = match[1];
+      const parts = fullMatch.split('::');
+      console.log('찾은 매치:', fullMatch, '파트:', parts);
+      
+      if (parts.length === 3) {
+        matches.push({
+          full: fullMatch,
+          aaa: parts[0] || '', // AAA가 없으면 빈 문자열
+          bbb: parts[1] || '', // BBB가 없으면 빈 문자열
+          ccc: parts[2] || '', // CCC가 없으면 빈 문자열
+          startIndex: match.index,
+          endIndex: match.index + fullMatch.length
+        });
+      }
+    }
+    
+    console.log('최종 매치 결과:', matches);
+    return matches;
+  };
+
+  // API 호출용 텍스트 변환 (AAA를 BBB로 대체)
+  const convertTextForAPI = (text) => {
+    const matches = parseSpecialFormat(text);
+    console.log('API 변환 - 원본 텍스트:', text);
+    console.log('API 변환 - 찾은 매치:', matches);
+    
+    let result = text;
+    
+    // 뒤에서부터 변환하여 인덱스 변화를 방지
+    for (let i = matches.length - 1; i >= 0; i--) {
+      const match = matches[i];
+      const replacement = match.bbb + match.ccc;
+      console.log(`API 변환 - ${match.full} -> ${replacement}`);
+      console.log(`API 변환 - 인덱스: ${match.startIndex} ~ ${match.endIndex}`);
+      console.log(`API 변환 - 변환 전: "${result}"`);
+      result = result.slice(0, match.startIndex) + replacement + result.slice(match.endIndex);
+      console.log(`API 변환 - 변환 후: "${result}"`);
+    }
+    
+    console.log('API 변환 - 최종 결과:', result);
+    return result;
+  };
+
+  // 화면 표시용 텍스트 변환 (AAA 그대로 유지)
+  const convertTextForDisplay = (text) => {
+    const matches = parseSpecialFormat(text);
+    console.log('화면 변환 - 원본 텍스트:', text);
+    console.log('화면 변환 - 찾은 매치:', matches);
+    
+    let result = text;
+    
+    // 뒤에서부터 변환하여 인덱스 변화를 방지
+    for (let i = matches.length - 1; i >= 0; i--) {
+      const match = matches[i];
+      const replacement = match.aaa + match.ccc;
+      console.log(`화면 변환 - ${match.full} -> ${replacement}`);
+      result = result.slice(0, match.startIndex) + replacement + result.slice(match.endIndex);
+    }
+    
+    console.log('화면 변환 - 결과:', result);
+    return result;
   };
 
   // 텍스트를 단어 단위로 분할(문장기호는 인접 단어와 합침, 가중치 부여)
@@ -391,8 +468,14 @@ export default function App() {
   };
 
   // 현재 재생 시간에 따라 강조할 단어 인덱스를 계산하는 함수
-  const calculateCurrentWordIndex = (currentTime, duration, words) => {
-    if (!duration || !words.length) return 0;
+  const calculateCurrentWordIndex = (currentTime, duration, take) => {
+    if (!duration || !take) return 0;
+    
+    // 화면 표시용 텍스트로 단어 분할
+    const displayText = take.displayText || convertTextForDisplay(take.text);
+    const words = splitIntoWords(displayText);
+    
+    if (!words.length) return 0;
     
     const totalDuration = duration + 1;
     const totalWeight = words.reduce((sum, word) => sum + word.weight, 0);
@@ -412,7 +495,9 @@ export default function App() {
 
   // 강조 표시된 텍스트를 렌더링하는 컴포넌트(항상 동일한 기준)
   const HighlightedText = ({ text, currentIndex, fontSize, isCurrentTake }) => {
-    const words = splitIntoWords(text);
+    // text가 이미 displayText인 경우 그대로 사용, 아니면 변환
+    const displayText = text.displayText || convertTextForDisplay(text);
+    const words = splitIntoWords(displayText);
     const isDark = preset.darkMode;
     const effectiveFontSize = isTabletPC ? fontSize * 1.1 : fontSize;
     return (
@@ -465,11 +550,16 @@ export default function App() {
     const useVoiceId = voiceId || selectedVoiceRef.current.id;
     try {
       console.log(`Converting Take: ${take.name}`);
+      // API 호출용 텍스트로 변환 (AAA::BBB::CCC 형식 처리)
+      const apiText = convertTextForAPI(take.text);
+      console.log(`Original text: ${take.text}`);
+      console.log(`API text: ${apiText}`);
+      
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
       const response = await fetch(`${apiUrl}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: take.text, voice_id: useVoiceId }),
+        body: JSON.stringify({ text: apiText, voice_id: useVoiceId }),
         signal
       });
       
@@ -679,12 +769,11 @@ export default function App() {
         console.error(`Audio error for take ${takeIndex}:`, e);
       };
       audio.ontimeupdate = () => {
-        if (!takesRef.current || !takesRef.current[takeIndex] || !takesRef.current[takeIndex].text) {
-          console.warn('Take text not available for index:', takeIndex);
+        if (!takesRef.current || !takesRef.current[takeIndex]) {
+          console.warn('Take not available for index:', takeIndex);
           return;
         }
-        const words = splitIntoWords(takesRef.current[takeIndex].text);
-        const newIndex = calculateCurrentWordIndex(audio.currentTime, audio.duration, words);
+        const newIndex = calculateCurrentWordIndex(audio.currentTime, audio.duration, takesRef.current[takeIndex]);
         if (newIndex !== currentWordIndex) {
           setCurrentWordIndex(newIndex);
         }
@@ -2096,7 +2185,7 @@ export default function App() {
                 {generatingTake === index ? (
                   <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
                     <HighlightedText
-                      text={take.text}
+                      text={take}
                       currentIndex={-1}
                       fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
                       isCurrentTake={index === currentTake}
@@ -2104,7 +2193,7 @@ export default function App() {
                   </Box>
                 ) : (
                   <HighlightedText
-                    text={take.text}
+                    text={take}
                     currentIndex={index === currentTake && isPlaying && isAudioPlaying ? currentWordIndex : -1}
                     fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
                     isCurrentTake={index === currentTake}
