@@ -256,7 +256,31 @@ export default function App() {
     accent: '#90caf9',
     border: '#444',
   };
-  const theme = preset.darkMode ? darkTheme : lightTheme;
+  
+  // 삼국지3 폰트 특별 테마 색상들
+  const SAMGUKJI_HIGHLIGHT_COLORS = ['#4ea2e8', '#52ad5e', '#f1e54c'];
+  
+  // 삼국지3 폰트인지 확인하는 함수
+  const isSamgukjiFont = () => {
+    return preset.fontFamily === 'var(--font-sam3kr)';
+  };
+  
+  // 삼국지3 폰트용 하이라이트 색상 선택 (테이크별 랜덤)
+  const getSamgukjiHighlightColor = (takeIndex) => {
+    return SAMGUKJI_HIGHLIGHT_COLORS[takeIndex % SAMGUKJI_HIGHLIGHT_COLORS.length];
+  };
+  
+  // 삼국지3 폰트 특별 테마
+  const samgukjiTheme = {
+    background: '#0e1755',
+    text: '#ffffff',
+    card: '#0e1755',
+    accent: '#90caf9',
+    border: '#444',
+  };
+  
+  // 삼국지3 폰트일 때는 강제로 삼국지3 테마 적용, 아니면 기존 로직
+  const theme = isSamgukjiFont() ? samgukjiTheme : (preset.darkMode ? darkTheme : lightTheme);
 
   const fontFamilies = [
     'var(--font-mysteria)', // 지백체
@@ -507,8 +531,10 @@ export default function App() {
     return Math.max(0, words.length - 1);
   };
 
+
+
   // 강조 표시된 텍스트를 렌더링하는 컴포넌트(항상 동일한 기준)
-  const HighlightedText = ({ text, currentIndex, fontSize, isCurrentTake }) => {
+  const HighlightedText = ({ text, currentIndex, fontSize, isCurrentTake, takeIndex }) => {
     // text가 문자열인지 객체인지 확인하고 안전하게 처리
     let displayText;
     if (typeof text === 'string') {
@@ -524,41 +550,77 @@ export default function App() {
     const words = splitIntoWords(displayText);
     const isDark = preset.darkMode;
     const effectiveFontSize = isTabletPC ? fontSize * 1.1 : fontSize;
+    const isSamgukji = isSamgukjiFont();
+    
+    // 삼국지3 폰트일 때 강제 적용할 스타일
+    const samgukjiStyle = isSamgukji ? {
+      color: '#ffffff', // 흰색 글자
+    } : {};
+    
+    // 삼국지3 폰트일 때 하이라이트 스타일
+    const getHighlightStyle = (index) => {
+      if (index === currentIndex) {
+        if (isSamgukji) {
+          // 삼국지3 폰트일 때: 갈색 줄 없애고 글자색만 변경
+          return {
+            textDecoration: 'underline',
+            textUnderlinePosition: 'under',
+            textDecorationColor: 'rgba(139,69,19,0)', // 투명하게
+            textUnderlineOffset: '5%',
+            color: getSamgukjiHighlightColor(takeIndex || 0), // 현재 테이크에 따른 랜덤 색상
+            transition: 'all 0.3s',
+            padding: 0,
+            marginRight: 'auto',
+            borderRadius: '2px',
+          };
+        } else {
+          // 기존 스타일
+          return {
+            textDecoration: 'underline',
+            textUnderlinePosition: 'under',
+            textDecorationColor: 'rgba(139,69,19,0.8)',
+            textUnderlineOffset: '5%',
+            transition: 'all 0.3s',
+            padding: 0,
+            marginRight: 'auto',
+            borderRadius: '2px',
+          };
+        }
+      }
+      return {
+        textDecoration: 'none',
+        transition: 'all 0.3s',
+        padding: 0,
+        marginRight: 'auto',
+        borderRadius: '2px',
+      };
+    };
+    
     return (
       <span style={{
         position: 'relative',
         fontFamily: fontFamilies[fontFamilyIndex],
         fontSize: effectiveFontSize,
-        color: isDark ? '#aaaaaa' : '#1d1d1d',
+        color: isSamgukji ? '#ffffff' : (isDark ? '#aaaaaa' : '#1d1d1d'),
         lineHeight: preset.lineHeight[isTabletPC ? 'pc' : 'mobile'],
         wordBreak: 'break-all',
         whiteSpace: 'pre-wrap',
         display: 'block',
+        ...samgukjiStyle
       }}>
         {isCurrentTake && (
           <span style={{
             position: 'absolute',
             left: 'calc(-1.2em + 7px)',
             top: '-11px',
-            color: 'rgba(139,69,19,0.8)',
+            color: isSamgukji ? '#ffffff' : 'rgba(139,69,19,0.8)',
           }}>
             •
           </span>
         )}
         {words.map((wordObj, index) => (
           <React.Fragment key={index}>
-            <span
-              style={{
-                textDecoration: index === currentIndex ? 'underline' : 'none',
-                textUnderlinePosition: 'under',
-                textDecorationColor: index === currentIndex ? 'rgba(139,69,19,0.8)' : undefined,
-                textUnderlineOffset: index === currentIndex ? '5%' : undefined,
-                transition: 'all 0.3s',
-                padding: 0,
-                marginRight: 'auto',
-                borderRadius: '2px',
-              }}
-            >
+            <span style={getHighlightStyle(index)}>
               {wordObj.word}
             </span>
             {/* 단어 사이에 일반 공백 */}
@@ -995,8 +1057,14 @@ export default function App() {
     };
   });
 
-  // 다크모드 토글
-  const handleToggleDark = () => setPreset(p => ({ ...p, darkMode: !p.darkMode }));
+  // 다크모드 토글 (삼국지3 폰트일 때는 비활성화)
+  const handleToggleDark = () => {
+    if (isSamgukjiFont()) {
+      // 삼국지3 폰트일 때는 다크모드 토글 무시
+      return;
+    }
+    setPreset(p => ({ ...p, darkMode: !p.darkMode }));
+  };
 
   // 테이크 텍스트 줄간격 상태
   const handleLineHeightUp = () => setPreset(p => {
@@ -1222,9 +1290,9 @@ export default function App() {
 
   useEffect(() => {
     // 다크/라이트 모드 전환 시 변경되는 모든 정보를 한 번에 처리
-    function setThemeByMode(dark) {
-      // body, html, overscroll 등 스타일 변경
-      const t = dark ? darkTheme : lightTheme;
+    function setThemeByMode() {
+      // 삼국지3 폰트일 때는 강제로 삼국지3 테마 적용
+      const t = isSamgukjiFont() ? samgukjiTheme : (preset.darkMode ? darkTheme : lightTheme);
       document.body.style.background = t.background;
       document.documentElement.style.background = t.background;
       document.documentElement.style.webkitOverflowScrolling = 'touch';
@@ -1232,8 +1300,8 @@ export default function App() {
       document.documentElement.style.setProperty('--app-background', t.background);
     }
     // 프리셋의 darkMode가 바뀔 때마다 테마 적용
-    setThemeByMode(preset.darkMode);
-  }, [preset.darkMode]);
+    setThemeByMode();
+  }, [preset.darkMode, preset.fontFamily]);
 
 
   // 소재 데이터 구조화
@@ -1808,8 +1876,8 @@ export default function App() {
   };
 
   return (
-    <Box sx={{ bgcolor: theme.background, minHeight: "100vh", color: theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
-      <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: theme.background, color: theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>
+    <Box sx={{ bgcolor: isSamgukjiFont() ? '#0e1755' : theme.background, minHeight: "100vh", color: isSamgukjiFont() ? '#ffffff' : theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
+      <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: isSamgukjiFont() ? '#0e1755' : theme.background, color: isSamgukjiFont() ? '#ffffff' : theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>
         <Toolbar sx={{
           width: isTabletPC ? '40%' : '80%',
           marginLeft: 'auto',
@@ -1845,27 +1913,27 @@ export default function App() {
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <svg width="48" height="48" viewBox="0 0 100 100" style={{ display: 'block', position: 'absolute', left: 0, top: 0, padding: 0, margin: 0, overflow: 'visible' }}>
-              {/* 삼각형 1 */}
-              <polygon
-                points="0,0 100,0 0,65"
-                fill={preset.darkMode ? '#111111' : '#cccccc'}
-                style={{ transition: 'fill 0.3s' }}
-              />
-              {/* 삼각형 2 */}
-              <polygon
-                points="100,0 0,65 70,84"
-                fill={preset.darkMode ? '#222222' : '#efefef'}
-                style={{
-                  filter: 'drop-shadow(3px 3px 30px rgba(128,128,128,0.3))',
-                  transition: 'fill 0.3s',
-                }}
-              />
-            </svg>
+                          <svg width="48" height="48" viewBox="0 0 100 100" style={{ display: 'block', position: 'absolute', left: 0, top: 0, padding: 0, margin: 0, overflow: 'visible' }}>
+                {/* 삼각형 1 */}
+                <polygon
+                  points="0,0 100,0 0,65"
+                  fill={isSamgukjiFont() ? '#0e1755' : (preset.darkMode ? '#111111' : '#cccccc')}
+                  style={{ transition: 'fill 0.3s' }}
+                />
+                {/* 삼각형 2 */}
+                <polygon
+                  points="100,0 0,65 70,84"
+                  fill={isSamgukjiFont() ? '#1a2a7a' : (preset.darkMode ? '#222222' : '#efefef')}
+                  style={{
+                    filter: 'drop-shadow(3px 3px 30px rgba(128,128,128,0.3))',
+                    transition: 'fill 0.3s',
+                  }}
+                />
+              </svg>
           </Box>
           <Typography variant="h6" component="div" sx={{
             width: '100%',
-            color: theme.text,
+            color: isSamgukjiFont() ? '#ffffff' : theme.text,
             fontWeight: 400,
             fontSize: isTabletPC ? '6rem' : '3rem',
             WebkitTextStroke: '0.03em',
@@ -1913,7 +1981,7 @@ export default function App() {
           mx: 'auto',
           mt: 4,
           p: 2,
-          color: theme.text,
+          color: isSamgukjiFont() ? '#ffffff' : theme.text,
           borderRadius: 3,
           transition: 'all 0.3s',
         }}
@@ -1921,7 +1989,7 @@ export default function App() {
         {/* 안내 텍스트도 숨김 처리 */}
         {!uiHidden && (
           <div>
-            <Typography sx={{ color: theme.text, fontSize: 16 }}>
+            <Typography sx={{ color: isSamgukjiFont() ? '#ffffff' : theme.text, fontSize: 16 }}>
               소리내어 읽고 싶은 글이 있나요-
             </Typography>
           </div>
@@ -1955,7 +2023,7 @@ export default function App() {
         {!uiHidden && takes.length === 0 && (
           <Box sx={{ mt: 2, mb: 2 }}>
             {/* 소제목 - 본문 스타일과 동일 */}
-            <Box sx={{ fontWeight: 400, fontSize: 16, color: theme.text, mb: 1, lineHeight: 2 }}>글감 모음</Box>
+            <Box sx={{ fontWeight: 400, fontSize: 16, color: isSamgukjiFont() ? '#ffffff' : theme.text, mb: 1, lineHeight: 2 }}>글감 모음</Box>
             {/* 글감 배열 정의 */}
             {(() => {
               const materialItems = [
@@ -2043,9 +2111,9 @@ export default function App() {
                       <Box key={colIdx} sx={{ flex: 1, minWidth: 0 }}>
                         {col.map((item, idx) => (
                           <div key={idx} style={{ marginBottom: 8 }}>
-                            <a href="#" onClick={item.onClick} style={{ color: 'inherit', textDecoration: 'none' }}>
+                            <a href="#" onClick={item.onClick} style={{ color: isSamgukjiFont() ? '#ffffff' : 'inherit', textDecoration: 'none' }}>
                               {getPrefix(item.label)}{' '}
-                              <span style={{ textDecoration: 'underline', textUnderlinePosition: 'under', textDecorationColor: `${theme.text}20`, textUnderlineOffset: '5%' }}>{getText(item.label)}</span>
+                              <span style={{ textDecoration: 'underline', textUnderlinePosition: 'under', textDecorationColor: isSamgukjiFont() ? '#ffffff20' : `${theme.text}20`, textUnderlineOffset: '5%' }}>{getText(item.label)}</span>
                             </a>
                           </div>
                         ))}
@@ -2061,10 +2129,10 @@ export default function App() {
                   <Box>
                     {materialItems.map((item, idx) => (
                       <div key={idx} style={{ marginBottom: 8 }}>
-                        <a href="#" onClick={item.onClick} style={{ color: 'inherit', textDecoration: 'none' }}>
-                          {getPrefix(item.label)}{' '}
-                          <span style={{ textDecoration: 'underline', textUnderlinePosition: 'under', textDecorationColor: `${theme.text}20`, textUnderlineOffset: '5%' }}>{getText(item.label)}</span>
-                        </a>
+                                              <a href="#" onClick={item.onClick} style={{ color: isSamgukjiFont() ? '#ffffff' : 'inherit', textDecoration: 'none' }}>
+                        {getPrefix(item.label)}{' '}
+                        <span style={{ textDecoration: 'underline', textUnderlinePosition: 'under', textDecorationColor: isSamgukjiFont() ? '#ffffff20' : `${theme.text}20`, textUnderlineOffset: '5%' }}>{getText(item.label)}</span>
+                      </a>
                       </div>
                     ))}
                   </Box>
@@ -2077,7 +2145,7 @@ export default function App() {
         {/* 원고지 안내 + 텍스트박스 */}
         {!uiHidden && takes.length === 0 && (
           <>
-            <Box sx={{ textAlign: 'left', fontSize: 16, color: theme.text, lineHeight: 2, mb: 1, mt: 1 }}>
+            <Box sx={{ textAlign: 'left', fontSize: 16, color: isSamgukjiFont() ? '#ffffff' : theme.text, lineHeight: 2, mb: 1, mt: 1 }}>
               {text === '' ? (
                 <>원고지. 적을 수 있어요.</>
               ) : (
@@ -2087,7 +2155,7 @@ export default function App() {
                     style={{
                       textDecoration: 'underline',
                       textUnderlinePosition: 'under',
-                      textDecorationColor: `${theme.text}20`,
+                      textDecorationColor: isSamgukjiFont() ? '#ffffff20' : `${theme.text}20`,
                       textUnderlineOffset: '5%',
                       cursor: 'pointer'
                     }}
@@ -2099,7 +2167,7 @@ export default function App() {
                 </>
               )}
             </Box>
-            <Box sx={{ width: '82vw', maxWidth: '100%', height: 0, borderTop: `1px solid ${theme.text}66`, margin: '5px auto 0 auto' }} />
+            <Box sx={{ width: '82vw', maxWidth: '100%', height: 0, borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff66' : theme.text}66`, margin: '5px auto 0 auto' }} />
         <Box sx={{ position: 'relative', mt: 3 }} ref={manuscriptInputRef}>
           <TextField
             fullWidth
@@ -2108,8 +2176,8 @@ export default function App() {
             value={text}
             onChange={e => setText(e.target.value)}
             inputRef={input => { window._mainTextField = input; }}
-            InputLabelProps={{ style: { color: theme.text } }}
-            InputProps={{ style: { color: theme.text, background: 'transparent', fontSize: 15, lineHeight: 1.7, border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px' } }}
+            InputLabelProps={{ style: { color: isSamgukjiFont() ? '#ffffff' : theme.text } }}
+            InputProps={{ style: { color: isSamgukjiFont() ? '#ffffff' : theme.text, background: 'transparent', fontSize: 15, lineHeight: 1.7, border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px' } }}
             sx={{
               '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
             }}
@@ -2139,7 +2207,7 @@ export default function App() {
                 marginTop: '-10px',
                 cursor: 'pointer',
                 borderRadius: 2,
-                color: '#44444440',
+                color: isSamgukjiFont() ? '#ffffff40' : '#44444440',
                 fontSize: 16,
                 WebkitTapHighlightColor: 'rgba(139, 69, 19, 0.1)',
                 '&:active': {
@@ -2192,7 +2260,7 @@ export default function App() {
               <span style={{
                 fontSize: '70%',
                 opacity: 0.7,
-                color: theme.text,
+                color: isSamgukjiFont() ? '#ffffff' : theme.text,
                 lineHeight: 1.4,
                 minWidth: 2,
                 fontWeight: 700,
@@ -2201,7 +2269,7 @@ export default function App() {
               }}>*</span>
               <Typography 
                 sx={{ 
-                  color: theme.text, 
+                  color: isSamgukjiFont() ? '#ffffff' : theme.text, 
                   fontSize: '70%', 
                   opacity: 0.7,
                   whiteSpace: 'pre-line',
@@ -2302,6 +2370,7 @@ export default function App() {
                       currentIndex={-1}
                       fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
                       isCurrentTake={index === currentTake}
+                      takeIndex={index}
                     />
                   </Box>
                 ) : (
@@ -2310,6 +2379,7 @@ export default function App() {
                     currentIndex={index === currentTake && isPlaying && isAudioPlaying ? currentWordIndex : -1}
                     fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
                     isCurrentTake={index === currentTake}
+                    takeIndex={index}
                   />
                 )}
               </Box>
@@ -2333,7 +2403,7 @@ export default function App() {
                   opacity: isRollingDice ? 1 : 0.2,
                   transition: 'opacity 0.3s, background-color 0.2s',
                   userSelect: 'none',
-                  color: theme.text,
+                  color: isSamgukjiFont() ? '#ffffff' : theme.text,
                   padding: '1rem',
                   borderRadius: '50%',
                   WebkitTapHighlightColor: 'transparent',
@@ -2363,7 +2433,7 @@ export default function App() {
         bottom: 15, // 플로팅 버튼 높이(56) + 10px
         zIndex: 2000,
         textAlign: 'right',
-        color: '#888',
+        color: isSamgukjiFont() ? '#ffffff' : '#888',
         fontSize: 13,
         pointerEvents: 'none',
         minWidth: 60
@@ -2410,7 +2480,7 @@ export default function App() {
           position: 'relative',
           pt: 0,
           pb: 0,
-          bgcolor: theme.background,
+          bgcolor: isSamgukjiFont() ? '#0e1755' : theme.background,
           transition: 'all 0.3s',
         }}>
           {/* 두줄 보더 */}
@@ -2418,14 +2488,14 @@ export default function App() {
             width: '82vw',
             maxWidth: '82%',
             height: 0,
-            borderTop: `1px solid ${theme.text}66`, // 40% opacity
+            borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff66' : theme.text}66`, // 40% opacity
             margin: '0 auto',
           }} />
           <Box sx={{
             width: '82vw',
             maxWidth: '82%',
             height: 0,
-            borderTop: `1px solid ${theme.text}66`, // 40% opacity
+            borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff66' : theme.text}66`, // 40% opacity
             margin: '3px auto 0 auto', // 간격 3px
           }} />
         <Button
@@ -2445,8 +2515,8 @@ export default function App() {
             fontSize: 18,
               height: '67px',
               lineHeight: '67px',
-              background: theme.background,
-              color: theme.text,
+              background: isSamgukjiFont() ? '#0e1755' : theme.background,
+              color: isSamgukjiFont() ? '#ffffff' : theme.text,
               border: 0,
               boxShadow: 'none',
               position: 'relative',
@@ -2519,7 +2589,7 @@ export default function App() {
                   </span>
                 </span>
               ) : (
-                <span style={{ color: theme.text}}>
+                <span style={{ color: isSamgukjiFont() ? '#ffffff' : theme.text}}>
                   소리내어 읽기
                 </span>
               )}
@@ -2667,7 +2737,7 @@ export default function App() {
           flexDirection: 'column',
           alignItems: 'center',
           fontSize: '22px',
-          color: 'rgba(140,140,140, 0.5)',
+          color: isSamgukjiFont() ? 'rgba(255,255,255, 0.5)' : 'rgba(140,140,140, 0.5)',
           userSelect: 'none',
         }}
       >
@@ -2695,16 +2765,32 @@ export default function App() {
         <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleLineHeightDown}>
           <span>∨</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleToggleDark}>
+        <Box 
+          sx={{ 
+            ...iconButtonStyle, 
+            fontSize: '80%',
+            opacity: isSamgukjiFont() ? 0.3 : 1,
+            cursor: isSamgukjiFont() ? 'default' : 'pointer',
+            pointerEvents: isSamgukjiFont() ? 'none' : 'auto'
+          }} 
+          onClick={handleToggleDark}
+        >
           <span>●</span>
         </Box>
         {/* DIM 처리된 테이크 공유(가위) 아이콘 */}
         <Box sx={{ ...iconButtonStyle, fontSize: '80%', opacity: 0.7, pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
           <span>✄</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%', position: 'relative' }} onClick={handleFontFamilyToggle}>
+        <Box 
+          sx={{ 
+            ...iconButtonStyle, 
+            fontSize: '80%', 
+            position: 'relative'
+          }} 
+          onClick={handleFontFamilyToggle}
+        >
           <span>ㄱ</span>
-          {showFontName && (
+                      {showFontName && !isSamgukjiFont() && (
             <Box
               key={fontNameKey}
               sx={{
@@ -2715,7 +2801,7 @@ export default function App() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                color: theme.text,
+                color: isSamgukjiFont() ? '#ffffff' : theme.text,
                 opacity: 0.5,
                 fontSize: '15px',
                 animation: 'fadeInOut 3s forwards',
@@ -2757,6 +2843,34 @@ export default function App() {
                   <span key={index} style={{ lineHeight: '1.2em' }}>{char}</span>
                 ));
               })()}
+            </Box>
+          )}
+          {/* 삼국지3 폰트일 때 특별 표시 */}
+          {isSamgukjiFont() && (
+            <Box
+              sx={{
+                position: 'absolute',
+                left: '50%',
+                top: 'calc(120% + 5px)',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                color: '#ffffff',
+                opacity: 0.8,
+                fontSize: '15px',
+                animation: 'fadeInOut 3s forwards',
+                '@keyframes fadeInOut': {
+                  '0%': { opacity: 0 },
+                  '5%': { opacity: 0.8 },
+                  '80%': { opacity: 0.8 },
+                  '100%': { opacity: 0 }
+                }
+              }}>
+              <span style={{ lineHeight: '1.2em' }}>삼</span>
+              <span style={{ lineHeight: '1.2em' }}>국</span>
+              <span style={{ lineHeight: '1.2em' }}>지</span>
+              <span style={{ lineHeight: '1.2em' }}>3</span>
             </Box>
           )}
         </Box>
