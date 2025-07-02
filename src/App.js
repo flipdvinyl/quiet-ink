@@ -128,6 +128,7 @@ export default function App() {
   // 배경음악 관련 상태
   const [bgMusic, setBgMusic] = useState(null);
   const [isBgMusicPlaying, setIsBgMusicPlaying] = useState(false);
+  const [bgMusicStartTime, setBgMusicStartTime] = useState(null);
   const [currentMaterial, setCurrentMaterial] = useState(null);
   const [popupInitialX, setPopupInitialX] = useState(0);
   const [customVoiceId, setCustomVoiceId] = useState('');
@@ -728,6 +729,10 @@ export default function App() {
         currentAudio.current.pause();
         setIsPaused(true);
         setIsPlaying(false);
+        // 배철수의 음악캠프인 경우 BGM도 일시정지
+        if (currentMaterial === 'musiccamp' && bgMusic) {
+          bgMusic.pause();
+        }
       }
       return;
     }
@@ -736,6 +741,10 @@ export default function App() {
       currentAudio.current.play().catch(() => {});
       setIsPaused(false);
       setIsPlaying(true);
+      // 배철수의 음악캠프인 경우 BGM도 재생
+      if (currentMaterial === 'musiccamp' && bgMusic) {
+        bgMusic.play().catch(() => {});
+      }
       return;
     }
 
@@ -900,6 +909,26 @@ export default function App() {
           currentGenerating === takeIndex ? null : currentGenerating
         );
         
+        // 배철수의 음악캠프 첫문장(0번째 테이크)에서 7초 타이밍 확인
+        if (currentMaterial === 'musiccamp' && takeIndex === 0 && bgMusicStartTime) {
+          const elapsedTime = Date.now() - bgMusicStartTime;
+          const sevenSeconds = 7 * 1000; // 7초를 밀리초로
+          
+          if (elapsedTime < sevenSeconds) {
+            // 7초 이전이면 7초 시점까지 기다린 후 재생
+            const waitTime = sevenSeconds - elapsedTime;
+            console.log(`음악캠프 첫문장: ${waitTime}ms 후 재생`);
+            audio.pause();
+            setTimeout(() => {
+              if (!isPausedRef.current) {
+                audio.play().catch(error => {
+                  console.error(`Error playing take ${takeIndex} after delay:`, error);
+                });
+              }
+            }, waitTime);
+          }
+        }
+        
         setTimeout(() => {
           handleScrollCurrentTake();
         }, 200);
@@ -955,6 +984,12 @@ export default function App() {
       currentAudio.current.onplay = null;
       currentAudio.current.ontimeupdate = null;
     }
+    
+    // 배철수의 음악캠프인 경우 BGM도 정지
+    if (currentMaterial === 'musiccamp' && bgMusic) {
+      stopBgMusic();
+    }
+    
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentTake(0);
@@ -1536,6 +1571,7 @@ export default function App() {
       bgMusic.volume = 0; // 처음에는 볼륨 0
       bgMusic.play().then(() => {
         setIsBgMusicPlaying(true);
+        setBgMusicStartTime(Date.now()); // BGM 시작 시간 기록
         // 3초 동안 페이드 인
         let volume = 0;
         const fadeInInterval = setInterval(() => {
@@ -1557,6 +1593,7 @@ export default function App() {
       bgMusic.pause();
       bgMusic.currentTime = 0;
       setIsBgMusicPlaying(false);
+      setBgMusicStartTime(null); // BGM 시작 시간 초기화
     }
   };
 
@@ -2612,14 +2649,14 @@ export default function App() {
             width: '82vw',
             maxWidth: '82%',
             height: 0,
-            borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff66' : theme.text}66`, // 40% opacity
+            borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff' : theme.text}66`, // 40% opacity
             margin: '0 auto',
           }} />
           <Box sx={{
             width: '82vw',
             maxWidth: '82%',
             height: 0,
-            borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff66' : theme.text}66`, // 40% opacity
+            borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff' : theme.text}66`, // 40% opacity
             margin: '3px auto 0 auto', // 간격 3px
           }} />
         <Button
