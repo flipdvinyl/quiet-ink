@@ -128,7 +128,6 @@ export default function App() {
   // 배경음악 관련 상태
   const [bgMusic, setBgMusic] = useState(null);
   const [isBgMusicPlaying, setIsBgMusicPlaying] = useState(false);
-  const [bgMusicStartTime, setBgMusicStartTime] = useState(null);
   const [currentMaterial, setCurrentMaterial] = useState(null);
   const [popupInitialX, setPopupInitialX] = useState(0);
   const [customVoiceId, setCustomVoiceId] = useState('');
@@ -145,6 +144,8 @@ export default function App() {
   // 최신 isPaused 값을 참조하기 위한 ref
   const isPausedRef = useRef(isPaused);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 테이크 화면 진입 시점 추적 (음악캠프용)
+  const takeScreenEnterTimeRef = useRef(null);
   // 프리셋 상태 관리
   const [preset, setPreset] = useState(() => {
     try {
@@ -729,10 +730,8 @@ export default function App() {
         currentAudio.current.pause();
         setIsPaused(true);
         setIsPlaying(false);
-        // 배철수의 음악캠프인 경우 BGM도 일시정지
-        if (currentMaterial === 'musiccamp' && bgMusic) {
-          bgMusic.pause();
-        }
+        // BGM도 일시정지
+        pauseBgMusic();
       }
       return;
     }
@@ -741,10 +740,8 @@ export default function App() {
       currentAudio.current.play().catch(() => {});
       setIsPaused(false);
       setIsPlaying(true);
-      // 배철수의 음악캠프인 경우 BGM도 재생
-      if (currentMaterial === 'musiccamp' && bgMusic) {
-        bgMusic.play().catch(() => {});
-      }
+      // BGM도 재개
+      resumeBgMusic();
       return;
     }
 
@@ -777,6 +774,7 @@ export default function App() {
       const textTakes = splitTextIntoTakes(text);
       setTakes(textTakes);
       takesRef.current = textTakes;
+      
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 150); // UI 전환 후 스크롤
       
       // 테이크 화면으로 넘어갈 때 배경음악 시작 (음악캠프인 경우)
@@ -786,17 +784,23 @@ export default function App() {
       
       setFadeIn(true);
       setGeneratingTake(0);
+      
+      // 첫 테이크 생성 시작 시점 기록 (음악캠프용)
+      takeScreenEnterTimeRef.current = Date.now();
       const firstTakeUrl = await convertToSpeech(textTakes[0], null, signal);
       audioBufferRef.current = { 0: firstTakeUrl };
       if (textTakes.length > 1) {
         prepareNextTake(1, null, signal);
       }
       
-      // 음악캠프인 경우 3초 대기 후 재생
+      // 음악캠프인 경우 새로운 조건으로 재생
       if (currentMaterial === 'musiccamp') {
+        const elapsedTime = Date.now() - takeScreenEnterTimeRef.current;
+        const timeToWait = Math.max(0, 7000 - elapsedTime); // 7초에서 경과 시간을 뺀 만큼 대기
+        
         setTimeout(() => {
           playTake(0);
-        }, 3000);
+        }, timeToWait);
       } else {
         playTake(0);
       }
@@ -909,26 +913,6 @@ export default function App() {
           currentGenerating === takeIndex ? null : currentGenerating
         );
         
-        // 배철수의 음악캠프 첫문장(0번째 테이크)에서 7초 타이밍 확인
-        if (currentMaterial === 'musiccamp' && takeIndex === 0 && bgMusicStartTime) {
-          const elapsedTime = Date.now() - bgMusicStartTime;
-          const sevenSeconds = 7 * 1000; // 7초를 밀리초로
-          
-          if (elapsedTime < sevenSeconds) {
-            // 7초 이전이면 7초 시점까지 기다린 후 재생
-            const waitTime = sevenSeconds - elapsedTime;
-            console.log(`음악캠프 첫문장: ${waitTime}ms 후 재생`);
-            audio.pause();
-            setTimeout(() => {
-              if (!isPausedRef.current) {
-                audio.play().catch(error => {
-                  console.error(`Error playing take ${takeIndex} after delay:`, error);
-                });
-              }
-            }, waitTime);
-          }
-        }
-        
         setTimeout(() => {
           handleScrollCurrentTake();
         }, 200);
@@ -984,12 +968,6 @@ export default function App() {
       currentAudio.current.onplay = null;
       currentAudio.current.ontimeupdate = null;
     }
-    
-    // 배철수의 음악캠프인 경우 BGM도 정지
-    if (currentMaterial === 'musiccamp' && bgMusic) {
-      stopBgMusic();
-    }
-    
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentTake(0);
@@ -1571,7 +1549,6 @@ export default function App() {
       bgMusic.volume = 0; // 처음에는 볼륨 0
       bgMusic.play().then(() => {
         setIsBgMusicPlaying(true);
-        setBgMusicStartTime(Date.now()); // BGM 시작 시간 기록
         // 3초 동안 페이드 인
         let volume = 0;
         const fadeInInterval = setInterval(() => {
@@ -1593,7 +1570,22 @@ export default function App() {
       bgMusic.pause();
       bgMusic.currentTime = 0;
       setIsBgMusicPlaying(false);
-      setBgMusicStartTime(null); // BGM 시작 시간 초기화
+    }
+  };
+
+  const pauseBgMusic = () => {
+    if (bgMusic && isBgMusicPlaying) {
+      bgMusic.pause();
+      setIsBgMusicPlaying(false);
+    }
+  };
+
+  const resumeBgMusic = () => {
+    if (bgMusic && !isBgMusicPlaying && currentMaterial === 'musiccamp') {
+      bgMusic.play().catch(err => {
+        console.error('배경음악 재개 실패:', err);
+      });
+      setIsBgMusicPlaying(true);
     }
   };
 
@@ -1793,6 +1785,10 @@ export default function App() {
         const materialKey = Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]);
         if (materialKey === 'musiccamp') {
           setCurrentMaterial('musiccamp');
+          // 음악캠프 선택 시 즉시 BGM 재생
+          if (!isBgMusicPlaying) {
+            playBgMusic();
+          }
         } else {
           if (currentMaterial === 'musiccamp') {
             stopBgMusic();
@@ -1861,6 +1857,9 @@ export default function App() {
           setIsPaused(false);
           setFadeIn(true);
           setGeneratingTake(0);
+          
+          // 첫 테이크 생성 시작 시점 기록 (음악캠프용)
+          takeScreenEnterTimeRef.current = Date.now();
           const firstTakeUrl = await convertToSpeech(newTakes[0], null, signal);
           if (signal.aborted) {
             console.log('Dice click action was aborted before playing.');
@@ -1871,11 +1870,14 @@ export default function App() {
             prepareNextTake(1, null, signal);
           }
           
-          // 음악캠프인 경우 3초 대기 후 재생
-          if (currentMaterial === 'musiccamp') {
+          // 음악캠프인 경우 새로운 조건으로 재생 (materialEntry 확인)
+          if (materialEntry && Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]) === 'musiccamp') {
+            const elapsedTime = Date.now() - takeScreenEnterTimeRef.current;
+            const timeToWait = Math.max(0, 7000 - elapsedTime); // 7초에서 경과 시간을 뺀 만큼 대기
+            
             setTimeout(() => {
               playTake(0);
-            }, 3000);
+            }, timeToWait);
           } else {
             playTake(0);
           }
