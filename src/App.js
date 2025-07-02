@@ -124,6 +124,11 @@ export default function App() {
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [popupInitialRotation, setPopupInitialRotation] = useState(0);
+  
+  // 배경음악 관련 상태
+  const [bgMusic, setBgMusic] = useState(null);
+  const [isBgMusicPlaying, setIsBgMusicPlaying] = useState(false);
+  const [currentMaterial, setCurrentMaterial] = useState(null);
   const [popupInitialX, setPopupInitialX] = useState(0);
   const [customVoiceId, setCustomVoiceId] = useState('');
   const [showFontName, setShowFontName] = useState(false);
@@ -764,6 +769,12 @@ export default function App() {
       setTakes(textTakes);
       takesRef.current = textTakes;
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 150); // UI 전환 후 스크롤
+      
+      // 테이크 화면으로 넘어갈 때 배경음악 시작 (음악캠프인 경우)
+      if (currentMaterial === 'musiccamp' && !isBgMusicPlaying) {
+        playBgMusic();
+      }
+      
       setFadeIn(true);
       setGeneratingTake(0);
       const firstTakeUrl = await convertToSpeech(textTakes[0], null, signal);
@@ -771,7 +782,15 @@ export default function App() {
       if (textTakes.length > 1) {
         prepareNextTake(1, null, signal);
       }
-      playTake(0);
+      
+      // 음악캠프인 경우 3초 대기 후 재생
+      if (currentMaterial === 'musiccamp') {
+        setTimeout(() => {
+          playTake(0);
+        }, 3000);
+      } else {
+        playTake(0);
+      }
     } catch (e) {
       if (isUnloadingRef.current) {
         console.log('TTS generation aborted due to page unload.');
@@ -880,6 +899,7 @@ export default function App() {
         setGeneratingTake(currentGenerating =>
           currentGenerating === takeIndex ? null : currentGenerating
         );
+        
         setTimeout(() => {
           handleScrollCurrentTake();
         }, 200);
@@ -1322,6 +1342,11 @@ export default function App() {
         const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
         setPreset(p => ({ ...p, voice: randomVoice.name }));
         setSelectedVoice(randomVoice);
+        // 배경음악 정지
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
+        }
       }
     },
     wayofcode: {
@@ -1336,6 +1361,11 @@ export default function App() {
         if (rickVoice) {
           setPreset(p => ({ ...p, voice: rickVoice.name }));
           setSelectedVoice(rickVoice);
+        }
+        // 배경음악 정지
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
         }
       }
     },
@@ -1355,6 +1385,11 @@ export default function App() {
         const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
         setPreset(p => ({ ...p, voice: randomVoice.name }));
         setSelectedVoice(randomVoice);
+        // 배경음악 정지
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
+        }
       }
     },
     musiccamp: {
@@ -1375,6 +1410,8 @@ export default function App() {
           setPreset(p => ({ ...p, voice: guitarVoice.name }));
           setSelectedVoice(guitarVoice);
         }
+        // 배경음악 설정 (재생은 하지 않음)
+        setCurrentMaterial('musiccamp');
       }
     },
     essay: {
@@ -1390,6 +1427,11 @@ export default function App() {
           setPreset(p => ({ ...p, voice: seokwonVoice.name }));
           setSelectedVoice(seokwonVoice);
         }
+        // 배경음악 정지
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
+        }
       }
     },
     sonagi: {
@@ -1404,6 +1446,11 @@ export default function App() {
         if (publisherVoice) {
           setPreset(p => ({ ...p, voice: publisherVoice.name }));
           setSelectedVoice(publisherVoice);
+        }
+        // 배경음악 정지
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
         }
       }
     },
@@ -1436,6 +1483,12 @@ export default function App() {
 
         setText(randomText);
         
+        // 배경음악 처리
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
+        }
+        
         // 해당 소재의 목소리 매핑 적용
         if (materialEntry) {
           const material = materialEntry[1];
@@ -1460,6 +1513,52 @@ export default function App() {
   // 핸들러 함수 정의
   const handleRandomNews = (e) => MATERIALS.news.handler(e);
   const handleRandomLiterature = (e) => MATERIALS.literature.handler(e);
+
+  // 배경음악 초기화
+  useEffect(() => {
+    const music = new Audio('/bgm_musiccamp.mp3');
+    music.loop = true;
+    music.volume = 0.3; // 30% 볼륨
+    setBgMusic(music);
+    
+    return () => {
+      if (music) {
+        music.pause();
+        music.src = '';
+      }
+    };
+  }, []);
+
+  // 배경음악 재생/정지 함수
+  const playBgMusic = () => {
+    if (bgMusic) {
+      bgMusic.currentTime = 22; // 22초부터 시작
+      bgMusic.volume = 0; // 처음에는 볼륨 0
+      bgMusic.play().then(() => {
+        setIsBgMusicPlaying(true);
+        // 3초 동안 페이드 인
+        let volume = 0;
+        const fadeInInterval = setInterval(() => {
+          volume += 0.3 / 30; // 3초(30 * 100ms) 동안 0.3까지 증가
+          if (volume >= 0.3) {
+            volume = 0.3;
+            clearInterval(fadeInInterval);
+          }
+          bgMusic.volume = volume;
+        }, 100);
+      }).catch(err => {
+        console.error('배경음악 재생 실패:', err);
+      });
+    }
+  };
+
+  const stopBgMusic = () => {
+    if (bgMusic) {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+      setIsBgMusicPlaying(false);
+    }
+  };
 
   useEffect(() => {
     // 최초 실행 시 화면 맨 위로 스크롤 (렌더링 이후)
@@ -1652,6 +1751,18 @@ export default function App() {
       setText(newText);
       if (materialEntry) {
         setTitle(materialEntry[1].name);
+        
+        // 배경음악 처리
+        const materialKey = Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]);
+        if (materialKey === 'musiccamp') {
+          setCurrentMaterial('musiccamp');
+        } else {
+          if (currentMaterial === 'musiccamp') {
+            stopBgMusic();
+            setCurrentMaterial(null);
+          }
+        }
+        
         // 해당 소재의 목소리 매핑 적용
         const material = materialEntry[1];
         if (material.voiceMapping) {
@@ -1698,6 +1809,11 @@ export default function App() {
         setTakes(newTakes);
         takesRef.current = newTakes;
         
+        // 테이크 화면으로 넘어갈 때 배경음악 시작 (음악캠프인 경우)
+        if (currentMaterial === 'musiccamp' && !isBgMusicPlaying) {
+          playBgMusic();
+        }
+        
         // 최상단으로 스크롤
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -1717,7 +1833,15 @@ export default function App() {
           if (newTakes.length > 1) {
             prepareNextTake(1, null, signal);
           }
-          playTake(0);
+          
+          // 음악캠프인 경우 3초 대기 후 재생
+          if (currentMaterial === 'musiccamp') {
+            setTimeout(() => {
+              playTake(0);
+            }, 3000);
+          } else {
+            playTake(0);
+          }
         } catch (e) {
           if (e.name === 'AbortError') {
             console.log('Dice click TTS generation was aborted.');
@@ -1913,23 +2037,23 @@ export default function App() {
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-                          <svg width="48" height="48" viewBox="0 0 100 100" style={{ display: 'block', position: 'absolute', left: 0, top: 0, padding: 0, margin: 0, overflow: 'visible' }}>
-                {/* 삼각형 1 */}
-                <polygon
-                  points="0,0 100,0 0,65"
+            <svg width="48" height="48" viewBox="0 0 100 100" style={{ display: 'block', position: 'absolute', left: 0, top: 0, padding: 0, margin: 0, overflow: 'visible' }}>
+              {/* 삼각형 1 */}
+              <polygon
+                points="0,0 100,0 0,65"
                   fill={isSamgukjiFont() ? '#0e1755' : (preset.darkMode ? '#111111' : '#cccccc')}
-                  style={{ transition: 'fill 0.3s' }}
-                />
-                {/* 삼각형 2 */}
-                <polygon
-                  points="100,0 0,65 70,84"
+                style={{ transition: 'fill 0.3s' }}
+              />
+              {/* 삼각형 2 */}
+              <polygon
+                points="100,0 0,65 70,84"
                   fill={isSamgukjiFont() ? '#1a2a7a' : (preset.darkMode ? '#222222' : '#efefef')}
-                  style={{
-                    filter: 'drop-shadow(3px 3px 30px rgba(128,128,128,0.3))',
-                    transition: 'fill 0.3s',
-                  }}
-                />
-              </svg>
+                style={{
+                  filter: 'drop-shadow(3px 3px 30px rgba(128,128,128,0.3))',
+                  transition: 'fill 0.3s',
+                }}
+              />
+            </svg>
           </Box>
           <Typography variant="h6" component="div" sx={{
             width: '100%',
@@ -2130,9 +2254,9 @@ export default function App() {
                     {materialItems.map((item, idx) => (
                       <div key={idx} style={{ marginBottom: 8 }}>
                                               <a href="#" onClick={item.onClick} style={{ color: isSamgukjiFont() ? '#ffffff' : 'inherit', textDecoration: 'none' }}>
-                        {getPrefix(item.label)}{' '}
+                          {getPrefix(item.label)}{' '}
                         <span style={{ textDecoration: 'underline', textUnderlinePosition: 'under', textDecorationColor: isSamgukjiFont() ? '#ffffff20' : `${theme.text}20`, textUnderlineOffset: '5%' }}>{getText(item.label)}</span>
-                      </a>
+                        </a>
                       </div>
                     ))}
                   </Box>
