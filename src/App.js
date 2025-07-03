@@ -130,7 +130,14 @@ export default function App() {
   const [isBgMusicPlaying, setIsBgMusicPlaying] = useState(false);
   const [currentMaterial, setCurrentMaterial] = useState(null);
   const [popupInitialX, setPopupInitialX] = useState(0);
-  const [customVoiceId, setCustomVoiceId] = useState('');
+  const [customVoiceId, setCustomVoiceId] = useState(() => {
+    try {
+      const saved = localStorage.getItem('audiobook-custom-voice-id');
+      return saved || '';
+    } catch {
+      return '';
+    }
+  });
   const [showFontName, setShowFontName] = useState(false);
   const [fontNameKey, setFontNameKey] = useState(0);
   const fontNameTimeoutRef = useRef();
@@ -161,6 +168,13 @@ export default function App() {
       localStorage.setItem('audiobook-preset', JSON.stringify(preset));
     } catch {}
   }, [preset]);
+
+  // customVoiceId 변경 시 localStorage에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('audiobook-custom-voice-id', customVoiceId);
+    } catch {}
+  }, [customVoiceId]);
 
   const iconButtonStyle = {
     width: 30,
@@ -1678,6 +1692,10 @@ export default function App() {
         description: `${customVoiceId} / [↻] 목소리 바꾸기`,
         isCustom: true
       });
+      // localStorage에 저장 (이미 useEffect에서 처리되지만 확실히 하기 위해)
+      try {
+        localStorage.setItem('audiobook-custom-voice-id', customVoiceId);
+      } catch {}
     } catch (err) {
       console.error('Failed to validate voice ID:', err);
       alert('잘못된 Voice ID 입력');
