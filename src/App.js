@@ -16,25 +16,13 @@ const APP_LANGUAGE = 'kr';
 // 언어 감지 함수
 const detectLanguage = (text) => {
   try {
-    console.log('언어 감지 시작:', text.substring(0, 100) + '...');
-    
     // franc로 언어 감지
     const detectedLang = franc(text, { minLength: 3 });
-    console.log('franc 감지 결과:', detectedLang);
     
     // 감지된 언어를 지원 언어로 매핑
-    if (detectedLang === 'kor') {
-      console.log('한국어로 감지됨');
-      return 'ko';
-    }
-    if (detectedLang === 'eng') {
-      console.log('영어로 감지됨');
-      return 'en';
-    }
-    if (detectedLang === 'jpn') {
-      console.log('일본어로 감지됨');
-      return 'ja';
-    }
+    if (detectedLang === 'kor') return 'ko';
+    if (detectedLang === 'eng') return 'en';
+    if (detectedLang === 'jpn') return 'ja';
     
     // 유니코드 기반 감지 (백업)
     const koreanChars = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
@@ -45,24 +33,12 @@ const detectLanguage = (text) => {
     const hasJapanese = japaneseChars.test(text);
     const hasEnglish = englishChars.test(text);
     
-    console.log('유니코드 감지 결과:', { hasKorean, hasJapanese, hasEnglish });
-    
     // 우선순위: 한국어 > 일본어 > 영어
-    if (hasKorean) {
-      console.log('유니코드로 한국어 감지');
-      return 'ko';
-    }
-    if (hasJapanese) {
-      console.log('유니코드로 일본어 감지');
-      return 'ja';
-    }
-    if (hasEnglish) {
-      console.log('유니코드로 영어 감지');
-      return 'en';
-    }
+    if (hasKorean) return 'ko';
+    if (hasJapanese) return 'ja';
+    if (hasEnglish) return 'en';
     
     // 기본값: 시스템 언어 (한국어)
-    console.log('언어 감지 실패, 기본값 한국어 사용');
     return 'ko';
   } catch (error) {
     console.error('언어 감지 오류:', error);
@@ -412,11 +388,8 @@ export default function App() {
     setTitleLoading(true);
       setTitle("제목을 고민하는 중");
       try {
-        // API URL 결정 (Vercel에서는 상대 경로 사용)
-        const apiUrl = process.env.NODE_ENV === 'production' 
-          ? '/api/generate-title' 
-          : (process.env.REACT_APP_API_URL || "http://localhost:4000") + '/api/generate-title';
-        const res = await fetch(apiUrl, {
+        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
+        const res = await fetch(`${apiUrl}/api/generate-title`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text }),
@@ -730,12 +703,8 @@ export default function App() {
       const languageCode = detectLanguage(take.text);
       console.log(`Detected language: ${languageCode}`);
       
-      // API URL 결정 (Vercel에서는 상대 경로 사용)
-      const apiUrl = process.env.NODE_ENV === 'production' 
-        ? '/api/tts' 
-        : (process.env.REACT_APP_API_URL || "http://localhost:4000") + '/api/tts';
-      console.log('API URL:', apiUrl);
-      const response = await fetch(apiUrl, {
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      const response = await fetch(`${apiUrl}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
