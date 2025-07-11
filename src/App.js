@@ -644,14 +644,26 @@ export default function App() {
           });
           break;
         }
-        // 기존 로직: 마침표, 느낌표, 물음표, 물결(~) 우선, 없으면 공백
+        // 기존 로직: 마침표, 느낌표, 물음표, 물결(~), 일본어 특수문자 우선, 없으면 공백
         let cutIndex = maxLength;
         const lastPeriod = remainingText.lastIndexOf('.', maxLength);
         const lastExclam = remainingText.lastIndexOf('!', maxLength);
         const lastQuestion = remainingText.lastIndexOf('?', maxLength);
         const lastTilde = remainingText.lastIndexOf('~', maxLength);
+        const lastJapanesePeriod = remainingText.lastIndexOf('。', maxLength);
+        const lastJapaneseComma = remainingText.lastIndexOf('、', maxLength);
+        const lastJapaneseQuote1 = remainingText.lastIndexOf('「', maxLength);
+        const lastJapaneseQuote2 = remainingText.lastIndexOf('」', maxLength);
+        const lastJapaneseQuote3 = remainingText.lastIndexOf('"', maxLength);
+        const lastJapaneseQuote4 = remainingText.lastIndexOf('"', maxLength);
+        const lastJapaneseQuote5 = remainingText.lastIndexOf("'", maxLength);
+        const lastJapaneseQuote6 = remainingText.lastIndexOf("'", maxLength);
         const lastSpace = remainingText.lastIndexOf(' ', maxLength);
-        const candidates = [lastPeriod, lastExclam, lastQuestion, lastTilde].filter(idx => idx > 0);
+        const candidates = [
+          lastPeriod, lastExclam, lastQuestion, lastTilde, lastJapanesePeriod,
+          lastJapaneseComma, lastJapaneseQuote1, lastJapaneseQuote2, 
+          lastJapaneseQuote3, lastJapaneseQuote4, lastJapaneseQuote5, lastJapaneseQuote6
+        ].filter(idx => idx > 0);
         if (candidates.length > 0) {
           cutIndex = Math.max(...candidates) + 1;
         } else if (lastSpace > 0) {
@@ -765,22 +777,23 @@ export default function App() {
                   (sampleText.match(/[a-zA-Z]/g) || []).length > (sampleText.match(/[\uAC00-\uD7AF\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g) || []).length;
     }
     
-    // 단어+문장기호를 하나의 토큰으로 합침
-    const wordRegex = /[^\s.,!?]+[.,!?]?|[.,!?]/g;
+    // 단어+문장기호를 하나의 토큰으로 합침 (일본어 특수문자 포함)
+    const wordRegex = /[^\s.,!?。、""'']+[.,!?。、""'']?|[.,!?。、""'']/g;
     const rawWords = text.match(wordRegex) || [];
     
     // 가중치 부여: 영문일 때 .은 0.5초(7자), 그 외는 0.75초(11자), ,?!는 0.5초(7자)
+    // 일본어 특수문자: 。는 마침표와 동일, 、는 쉼표와 동일, 인용부호들은 쉼표와 동일
     return rawWords.map((word, idx) => {
-      let weight = word.replace(/[.,!?]/g, '').length;
-      if (word.endsWith('.')) {
+      let weight = word.replace(/[.,!?。、""'']/g, '').length;
+      if (word.endsWith('.') || word.endsWith('。')) {
         weight += isEnglish ? 7 : 11; // 영문일 때 0.5초, 그 외는 0.75초
-      } else if (/[,!?]$/.test(word)) {
+      } else if (/[,!?、""'']$/.test(word)) {
         weight += 7; // 0.5초
       }
       return {
         word,
         weight,
-        isEndOfSentence: /[.,!?]$/.test(word)
+        isEndOfSentence: /[.,!?。、""'']$/.test(word)
       };
     });
   };
