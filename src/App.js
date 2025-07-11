@@ -6,7 +6,7 @@ import {
   Alert, Fade, Backdrop
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT, WAYOFCODE_EN_TEXT } from './data/sampleTexts.js';
+import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT, WAYOFCODE_EN_TEXT, DESIGNAH_TEXT } from './data/sampleTexts.js';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from './data/textContent.js';
 import defaultPreset from './presets/defaultPreset';
 
@@ -1773,6 +1773,26 @@ export default function App() {
         }
       }
     },
+    designah: {
+      name: "デザインあ",
+      list: [DESIGNAH_TEXT],
+      voiceMapping: null, // 랜덤 목소리
+      bgm: null, // BGM 없음
+      handler: (e) => {
+        e.preventDefault();
+        hapticFeedback.light();
+        setText(DESIGNAH_TEXT);
+        // 랜덤 목소리 선택
+        const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
+        setPreset(p => ({ ...p, voice: randomVoice.name }));
+        setSelectedVoice(randomVoice);
+        // 배경음악 정지
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
+        }
+      }
+    },
     literature: {
       name: "예술책 한 페이지",
       list: LITERATURE_QUOTES,
@@ -2687,6 +2707,11 @@ export default function App() {
                   label: '- THE WAY OF CODE',
                   text: 'THE WAY OF CODE',
                   onClick: MATERIALS.wayofcode_en.handler
+                },
+                {
+                  label: '- デザインあ',
+                  text: 'デザインあ',
+                  onClick: MATERIALS.designah.handler
                 }
               ];
               if (isTabletPC) {
