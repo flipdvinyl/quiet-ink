@@ -2684,17 +2684,17 @@ export default function App() {
                   onClick: MATERIALS.sonagi.handler
                 },
                 {
-                  label: '- 배철수의 음악캠프',
+                  label: '- 배철수의 음악캠프 ↻',
                   text: '배철수의 음악캠프',
                   onClick: MATERIALS.musiccamp.handler
                 },
                 {
-                  label: '- 예술책 한 페이지',
+                  label: '- 예술책 한 페이지 ↻',
                   text: '예술책 한 페이지',
                   onClick: handleRandomLiterature
                 },
                 {
-                  label: '- 수퍼톤 소식',
+                  label: '- 수퍼톤 소식 ↻',
                   text: '수퍼톤 소식',
                   onClick: handleRandomNews
                 },
