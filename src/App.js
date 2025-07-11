@@ -1776,6 +1776,16 @@ export default function App() {
             setPreset(p => ({ ...p, voice: randomVoice.name }));
             setSelectedVoice(randomVoice);
           }
+          
+          // 음악캠프 콘텐츠가 선택된 경우 BGM 즉시 재생
+          const materialKey = Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]);
+          if (materialKey === 'musiccamp') {
+            setCurrentMaterial('musiccamp');
+            // 음악캠프 선택 시 즉시 BGM 재생
+            if (!isBgMusicPlaying) {
+              playBgMusic();
+            }
+          }
         }
       }
     }
