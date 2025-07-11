@@ -273,7 +273,7 @@ export default function App() {
 
       console.log('franc 감지 실패, 유니코드 기반 감지로 대체');
 
-      // 유니코드 기반 감지 (백업 방법)
+      // 개선된 유니코드 기반 감지 (백업 방법)
       const unicodeRanges = {
         ko: /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/, // 한글
         ja: /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/, // 일본어 (히라가나, 카타카나, 한자)
@@ -302,13 +302,50 @@ export default function App() {
         return maxLanguage[0];
       }
 
+      // 개선된 혼합 텍스트 감지
+      // 영어 단어 패턴 (공백으로 구분된 영문자 시퀀스)
+      const englishWordPattern = /\b[a-zA-Z]+\b/g;
+      const englishWords = text.match(englishWordPattern) || [];
+      
+      // 한국어 단어 패턴 (한글 문자 시퀀스)
+      const koreanWordPattern = /[\uAC00-\uD7AF]+/g;
+      const koreanWords = text.match(koreanWordPattern) || [];
+      
+      // 일본어 단어 패턴 (히라가나/카타카나/한자 시퀀스)
+      const japaneseWordPattern = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+/g;
+      const japaneseWords = text.match(japaneseWordPattern) || [];
+
+      console.log('단어 기반 감지:', {
+        english: englishWords.length,
+        korean: koreanWords.length,
+        japanese: japaneseWords.length
+      });
+
+      // 영어 단어가 가장 많고, 다른 언어 단어가 거의 없는 경우
+      if (englishWords.length > 0 && englishWords.length >= koreanWords.length && englishWords.length >= japaneseWords.length) {
+        console.log('단어 기반 영어 감지 성공');
+        return 'en';
+      }
+
+      // 한국어 단어가 가장 많고, 다른 언어 단어가 거의 없는 경우
+      if (koreanWords.length > 0 && koreanWords.length >= englishWords.length && koreanWords.length >= japaneseWords.length) {
+        console.log('단어 기반 한국어 감지 성공');
+        return 'ko';
+      }
+
+      // 일본어 단어가 가장 많고, 다른 언어 단어가 거의 없는 경우
+      if (japaneseWords.length > 0 && japaneseWords.length >= englishWords.length && japaneseWords.length >= koreanWords.length) {
+        console.log('단어 기반 일본어 감지 성공');
+        return 'ja';
+      }
+
       console.log('모든 감지 방법 실패, 시스템 언어 사용:', currentLanguage);
       // 모든 방법이 실패하면 시스템 언어 반환
       return currentLanguage;
     } catch (error) {
       console.error('언어 감지 오류:', error);
       
-      // 오류 발생 시 유니코드 기반 감지만 시도
+      // 오류 발생 시 개선된 유니코드 기반 감지 시도
       try {
         const unicodeRanges = {
           ko: /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/, // 한글
@@ -329,6 +366,31 @@ export default function App() {
         if (maxLanguage[1] >= 3) {
           console.log('오류 후 유니코드 기반 감지 성공:', maxLanguage[0]);
           return maxLanguage[0];
+        }
+
+        // 오류 후 단어 기반 감지도 시도
+        const englishWordPattern = /\b[a-zA-Z]+\b/g;
+        const englishWords = text.match(englishWordPattern) || [];
+        
+        const koreanWordPattern = /[\uAC00-\uD7AF]+/g;
+        const koreanWords = text.match(koreanWordPattern) || [];
+        
+        const japaneseWordPattern = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+/g;
+        const japaneseWords = text.match(japaneseWordPattern) || [];
+
+        if (englishWords.length > 0 && englishWords.length >= koreanWords.length && englishWords.length >= japaneseWords.length) {
+          console.log('오류 후 단어 기반 영어 감지 성공');
+          return 'en';
+        }
+
+        if (koreanWords.length > 0 && koreanWords.length >= englishWords.length && koreanWords.length >= japaneseWords.length) {
+          console.log('오류 후 단어 기반 한국어 감지 성공');
+          return 'ko';
+        }
+
+        if (japaneseWords.length > 0 && japaneseWords.length >= englishWords.length && japaneseWords.length >= koreanWords.length) {
+          console.log('오류 후 단어 기반 일본어 감지 성공');
+          return 'ja';
         }
       } catch (fallbackError) {
         console.error('백업 언어 감지도 실패:', fallbackError);
