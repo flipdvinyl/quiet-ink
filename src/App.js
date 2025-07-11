@@ -511,9 +511,16 @@ export default function App() {
     }
   };
 
-  // 텍스트를 200자 단위로 나누는 함수
-  const splitTextIntoTakes = (text) => {
-    const maxLength = 200;
+  // 텍스트를 200자 단위로 나누는 함수 (영어는 300자)
+  const splitTextIntoTakes = async (text) => {
+    // 첫 부분(500자 이하)으로 언어 감지
+    const sampleText = text.substring(0, Math.min(500, text.length));
+    const detectedLanguage = await detectLanguage(sampleText);
+    
+    // 영어인 경우 300자, 그 외는 200자
+    const maxLength = detectedLanguage === 'en' ? 300 : 200;
+    console.log(`언어 감지 결과: ${detectedLanguage}, 테이크 길이: ${maxLength}자`);
+    
     const takes = [];
     let takeNumber = 1;
 
@@ -940,7 +947,7 @@ export default function App() {
     setIsPlaying(true);
     setIsPaused(false);
     try {
-      const textTakes = splitTextIntoTakes(text);
+      const textTakes = await splitTextIntoTakes(text);
       setTakes(textTakes);
       takesRef.current = textTakes;
       
@@ -2031,7 +2038,7 @@ export default function App() {
         setIsAudioPlaying(false);
         
         // takes 배열 업데이트
-        const newTakes = splitTextIntoTakes(newText);
+        const newTakes = await splitTextIntoTakes(newText);
         setTakes(newTakes);
         takesRef.current = newTakes;
         
