@@ -482,6 +482,12 @@ export default function App() {
   // 제목 생성: 최초 소리내어 읽기 버튼을 누를 때만, title이 비어있을 때만 fetch
   const generateTitleIfNeeded = async () => {
     if (!title && text) {
+      // WAYOFCODE_EN_TEXT에 대한 특별 처리
+      if (text === WAYOFCODE_EN_TEXT) {
+        setTitle("THE WAY OF CODE");
+        return;
+      }
+      
       // MATERIALS에서 텍스트가 포함된 항목 찾기
       const matchedMaterial = Object.values(MATERIALS).find(material => material.list && material.list.includes(text));
       if (matchedMaterial) {
