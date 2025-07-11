@@ -1015,8 +1015,11 @@ export default function App() {
       
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 150); // UI 전환 후 스크롤
       
-      // 테이크 화면으로 넘어갈 때 배경음악 시작 (음악캠프인 경우)
-      if (currentMaterial === 'musiccamp' && !isBgMusicPlaying) {
+      // 테이크 화면으로 넘어갈 때 배경음악 시작 (BGM이 있는 소재인 경우)
+      const currentMaterialEntry = Object.entries(MATERIALS).find(([key, material]) => 
+        material.list && material.list.includes(text)
+      );
+      if (currentMaterialEntry && currentMaterialEntry[1].bgm && !isBgMusicPlaying) {
         playBgMusic();
       }
       
@@ -1581,6 +1584,7 @@ export default function App() {
       name: "수퍼톤 소식",
       list: SAMPLE_NEWS_LIST,
       voiceMapping: null, // 랜덤 목소리
+      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1604,6 +1608,7 @@ export default function App() {
       name: "코드의 길 / 번역본",
       list: [WAYOFCODE_TEXT],
       voiceMapping: "릭 루빈",
+      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(WAYOFCODE_TEXT);
@@ -1624,6 +1629,7 @@ export default function App() {
       name: "THE WAY OF CODE",
       list: [WAYOFCODE_EN_TEXT],
       voiceMapping: "릭 루빈",
+      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(WAYOFCODE_EN_TEXT);
@@ -1644,6 +1650,7 @@ export default function App() {
       name: "예술책 한 페이지",
       list: LITERATURE_QUOTES,
       voiceMapping: null, // 랜덤 목소리
+      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1667,6 +1674,7 @@ export default function App() {
       name: "배철수의 음악캠프 오프닝",
       list: MUSICCAMP_QUOTES,
       voiceMapping: "송골매 기타리스트",
+      bgm: '/bgm_musiccamp.mp3', // BGM 있음
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1689,6 +1697,7 @@ export default function App() {
       name: "보통의 존재",
       list: [ESSAY_TEXT],
       voiceMapping: "이석원",
+      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(ESSAY_TEXT);
@@ -1709,6 +1718,7 @@ export default function App() {
       name: "소나기",
       list: [SONAGI_TEXT],
       voiceMapping: "출판사 『무제』 사장",
+      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(SONAGI_TEXT);
@@ -1729,6 +1739,7 @@ export default function App() {
       name: "아무 글이나",
       list: [],
       voiceMapping: null, // 동적으로 결정
+      bgm: null, // 동적으로 결정
       handler: (e) => {
         e.preventDefault();
         // 모든 소재의 모든 글감을 하나의 배열로
@@ -2104,8 +2115,11 @@ export default function App() {
         setTakes(newTakes);
         takesRef.current = newTakes;
         
-        // 테이크 화면으로 넘어갈 때 배경음악 시작 (음악캠프인 경우)
-        if (currentMaterial === 'musiccamp' && !isBgMusicPlaying) {
+        // 테이크 화면으로 넘어갈 때 배경음악 시작 (BGM이 있는 소재인 경우)
+        const currentMaterialEntry = Object.entries(MATERIALS).find(([key, material]) => 
+          material.list && material.list.includes(newText)
+        );
+        if (currentMaterialEntry && currentMaterialEntry[1].bgm && !isBgMusicPlaying) {
           playBgMusic();
         }
         
@@ -2132,8 +2146,8 @@ export default function App() {
             prepareNextTake(1, null, signal);
           }
           
-          // 음악캠프인 경우 새로운 조건으로 재생 (materialEntry 확인)
-          if (materialEntry && Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]) === 'musiccamp') {
+          // BGM이 있는 소재인 경우 새로운 조건으로 재생
+          if (materialEntry && materialEntry[1].bgm) {
             const elapsedTime = Date.now() - takeScreenEnterTimeRef.current;
             const timeToWait = Math.max(0, 7000 - elapsedTime); // 7초에서 경과 시간을 뺀 만큼 대기
             
