@@ -10,6 +10,38 @@ import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONA
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from './data/textContent.js';
 import defaultPreset from './presets/defaultPreset';
 
+// 햅틱 피드백 유틸리티 함수들
+const hapticFeedback = {
+  // 가장 약한 단건 진동 (10ms)
+  lightest: () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  },
+  
+  // 약한 단건 진동 (20ms)
+  light: () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(20);
+    }
+  },
+  
+  // 중간 단건 진동 (50ms)
+  medium: () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+  },
+  
+  // 가장 약한 지속 진동 (10ms 간격으로 1초간)
+  lightestContinuous: () => {
+    if ('vibrate' in navigator) {
+      const pattern = Array(100).fill(10); // 10ms 진동, 10ms 간격으로 1초간
+      navigator.vibrate(pattern);
+    }
+  }
+};
+
 const PopupCard = ({
   isOpen,
   isClosing,
@@ -1097,6 +1129,7 @@ export default function App() {
     // PC/Mac: 마우스 휠, 트랙패드, 키보드 스크롤 감지
     const handleWheel = (e) => {
       isUserScrolling = true;
+      hapticFeedback.lightestContinuous(); // 스크롤 시작 시 지속 진동
       setTimeout(() => { isUserScrolling = false; }, 1500); // 1.5초 후 리셋
     };
     
@@ -1104,6 +1137,7 @@ export default function App() {
       // Page Up/Down, Home/End, 화살표 키로 스크롤하는 경우
       if (['PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
         isUserScrolling = true;
+        hapticFeedback.lightestContinuous(); // 스크롤 시작 시 지속 진동
         setTimeout(() => { isUserScrolling = false; }, 1500);
       }
     };
@@ -1111,6 +1145,7 @@ export default function App() {
     // 스크롤 이벤트로도 감지 (트랙패드 스크롤 포함)
     const handleScroll = () => {
       isUserScrolling = true;
+      hapticFeedback.lightestContinuous(); // 스크롤 시작 시 지속 진동
       setTimeout(() => { isUserScrolling = false; }, 1500);
     };
     
@@ -1220,6 +1255,7 @@ export default function App() {
       };
       audio.onplay = () => {
         console.log(`Take ${takeIndex} started playing`);
+        hapticFeedback.light(); // 테이크 재생 시작 시 진동
         setCurrentTake(takeIndex);
         setIsAudioPlaying(true);
         setGeneratingTake(currentGenerating =>
@@ -1631,7 +1667,10 @@ export default function App() {
     }
   }, [title, titleLoading]);
   const animatedFinalTitle = useTypewriterText(title, showTypewriterTitle, 150, () => {
-    if (!typewriterStarted) setTypewriterStarted(true);
+    if (!typewriterStarted) {
+      setTypewriterStarted(true);
+      hapticFeedback.medium(); // 제목 타이프라이터 시작 시 중간 진동
+    }
   });
 
   useEffect(() => {
@@ -1659,6 +1698,7 @@ export default function App() {
       bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         let currentText = text;
         let randomIndex;
         do {
@@ -1683,6 +1723,7 @@ export default function App() {
       bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         setText(WAYOFCODE_TEXT);
         // 릭 루빈 목소리로 변경
         const rickVoice = VOICES.find(v => v.name === "릭 루빈");
@@ -1704,6 +1745,7 @@ export default function App() {
       bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         setText(WAYOFCODE_EN_TEXT);
         // 릭 루빈 목소리로 변경
         const rickVoice = VOICES.find(v => v.name === "릭 루빈");
@@ -1725,6 +1767,7 @@ export default function App() {
       bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         let currentText = text;
         let randomIndex;
         do {
@@ -1749,6 +1792,7 @@ export default function App() {
       bgm: '/bgm_musiccamp.mp3', // BGM 있음
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         let currentText = text;
         let randomIndex;
         do {
@@ -1772,6 +1816,7 @@ export default function App() {
       bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         setText(ESSAY_TEXT);
         // 이석원 목소리로 변경
         const seokwonVoice = VOICES.find(v => v.name === "이석원");
@@ -1793,6 +1838,7 @@ export default function App() {
       bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         setText(SONAGI_TEXT);
         // 출판사 무제 사장 목소리로 변경
         const publisherVoice = VOICES.find(v => v.name === "출판사 『무제』 사장");
@@ -1814,6 +1860,7 @@ export default function App() {
       bgm: null, // 동적으로 결정
       handler: (e) => {
         e.preventDefault();
+        hapticFeedback.light();
         // 모든 소재의 모든 글감을 하나의 배열로
         const allTexts = Object.entries(MATERIALS)
           .filter(([key]) => key !== 'randomAny')
@@ -1865,8 +1912,14 @@ export default function App() {
   };
 
   // 핸들러 함수 정의
-  const handleRandomNews = (e) => MATERIALS.news.handler(e);
-  const handleRandomLiterature = (e) => MATERIALS.literature.handler(e);
+  const handleRandomNews = (e) => {
+    hapticFeedback.light();
+    MATERIALS.news.handler(e);
+  };
+  const handleRandomLiterature = (e) => {
+    hapticFeedback.light();
+    MATERIALS.literature.handler(e);
+  };
 
   // 배경음악 초기화
   useEffect(() => {
@@ -1970,8 +2023,16 @@ export default function App() {
   useEffect(() => {
     if (voiceMenuOpen) {
       setRandomPopupInitialValues();
+      hapticFeedback.lightestContinuous(); // 팝업 시작 시 지속 진동
     }
   }, [voiceMenuOpen]);
+
+  // showGptGuide 상태 변경 시 햅틱 피드백
+  useEffect(() => {
+    if (showGptGuide) {
+      hapticFeedback.lightestContinuous(); // GPT 가이드 팝업 시작 시 지속 진동
+    }
+  }, [showGptGuide]);
 
   // 클립보드에서 Voice ID를 가져와 설정하는 핸들러
   const handleCustomVoiceIdPaste = async () => {
@@ -2402,7 +2463,10 @@ export default function App() {
         }}>
           {/* Home Icon: absolutely positioned, animates in/out of view */}
           <Box
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              hapticFeedback.light();
+              window.location.reload();
+            }}
             sx={{
               position: 'fixed',
               left: `${homeIconLeft}px`,
@@ -2685,19 +2749,22 @@ export default function App() {
             </Box>
             <Box sx={{ width: '82vw', maxWidth: '100%', height: 0, borderTop: `1px solid ${isSamgukjiFont() ? '#ffffff66' : theme.text}66`, margin: '5px auto 0 auto' }} />
         <Box sx={{ position: 'relative', mt: 3 }} ref={manuscriptInputRef}>
-          <TextField
-            fullWidth
-            multiline
-            minRows={5}
-            value={text}
-            onChange={e => setText(e.target.value)}
-            inputRef={input => { window._mainTextField = input; }}
-            InputLabelProps={{ style: { color: isSamgukjiFont() ? '#ffffff' : theme.text } }}
-            InputProps={{ style: { color: isSamgukjiFont() ? '#ffffff' : theme.text, background: 'transparent', fontSize: 15, lineHeight: 1.7, border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px' } }}
-            sx={{
-              '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
-            }}
-          />
+                      <TextField
+              fullWidth
+              multiline
+              minRows={5}
+              value={text}
+              onChange={e => {
+                setText(e.target.value);
+                hapticFeedback.lightest(); // 키보드 입력 시 진동
+              }}
+              inputRef={input => { window._mainTextField = input; }}
+              InputLabelProps={{ style: { color: isSamgukjiFont() ? '#ffffff' : theme.text } }}
+              InputProps={{ style: { color: isSamgukjiFont() ? '#ffffff' : theme.text, background: 'transparent', fontSize: 15, lineHeight: 1.7, border: 'none', boxShadow: 'none', padding: 0, marginTop: '-15px', border: '0px' } }}
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+              }}
+            />
           {text === "" && (
                 <>
                   {/* 좌상단 80x80px 클릭시 입력모드만 */}
@@ -2877,7 +2944,10 @@ export default function App() {
                   },
                   WebkitTapHighlightColor: 'transparent',
                 }}
-                onMouseDown={() => handlePlayFromTake(index)}
+                onMouseDown={() => {
+                  hapticFeedback.light();
+                  handlePlayFromTake(index);
+                }}
               >
                 {generatingTake === index ? (
                   <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
@@ -2911,7 +2981,10 @@ export default function App() {
             className="dice-footer-box"
             >
               <Box 
-                onClick={handleDiceClick}
+                onClick={() => {
+                  hapticFeedback.light();
+                  handleDiceClick();
+                }}
                 sx={{ 
                   fontSize: `${(preset.fontSize[isTabletPC ? 'pc' : 'mobile'] ?? 15) * 3}px`,
                   cursor: 'pointer',
@@ -3040,7 +3113,10 @@ export default function App() {
               zIndex: 1001,
             }}
             disabled={!text}
-            onClick={handleTTS}
+            onClick={() => {
+              hapticFeedback.light();
+              handleTTS();
+            }}
           >
             <span style={{ display: 'inline-block' }}>
               {/* 기존 텍스트 렌더링 로직 그대로 */}
@@ -3257,28 +3333,28 @@ export default function App() {
           userSelect: 'none',
         }}
       >
-        <Box sx={iconButtonStyle} onClick={handleScrollTop}>
+        <Box sx={iconButtonStyle} onClick={() => { hapticFeedback.light(); handleScrollTop(); }}>
           <span>^</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '120%' }} onClick={handleScrollCurrentTake}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '120%' }} onClick={() => { hapticFeedback.light(); handleScrollCurrentTake(); }}>
           <span>~</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleFontSizeUp}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={() => { hapticFeedback.light(); handleFontSizeUp(); }}>
           <span>+</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleFontSizeDown}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={() => { hapticFeedback.light(); handleFontSizeDown(); }}>
           <span>-</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleWidthUp}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={() => { hapticFeedback.light(); handleWidthUp(); }}>
           <span>&gt;</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={handleWidthDown}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '90%' }} onClick={() => { hapticFeedback.light(); handleWidthDown(); }}>
           <span>&lt;</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleLineHeightUp}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={() => { hapticFeedback.light(); handleLineHeightUp(); }}>
           <span>∧</span>
         </Box>
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={handleLineHeightDown}>
+        <Box sx={{ ...iconButtonStyle, fontSize: '80%' }} onClick={() => { hapticFeedback.light(); handleLineHeightDown(); }}>
           <span>∨</span>
         </Box>
         <Box 
@@ -3289,7 +3365,12 @@ export default function App() {
             cursor: isSamgukjiFont() ? 'default' : 'pointer',
             pointerEvents: isSamgukjiFont() ? 'none' : 'auto'
           }} 
-          onClick={handleToggleDark}
+          onClick={() => { 
+            if (!isSamgukjiFont()) {
+              hapticFeedback.light(); 
+              handleToggleDark(); 
+            }
+          }}
         >
           <span>●</span>
         </Box>
@@ -3303,7 +3384,7 @@ export default function App() {
             fontSize: '80%', 
             position: 'relative'
           }} 
-          onClick={handleFontFamilyToggle}
+          onClick={() => { hapticFeedback.light(); handleFontFamilyToggle(); }}
         >
           <span>ㄱ</span>
                       {showFontName && !isSamgukjiFont() && (
