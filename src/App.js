@@ -596,7 +596,8 @@ export default function App() {
         takes.push({
           text: '',
           displayText: '',
-          name: `Take_${takeNumber}`
+          name: `Take_${takeNumber}`,
+          detectedLanguage: detectedLanguage
         });
         takeNumber++;
         continue;
@@ -606,7 +607,8 @@ export default function App() {
           takes.push({
             text: remainingText,
             displayText: convertTextForDisplay(remainingText),
-            name: `Take_${takeNumber}`
+            name: `Take_${takeNumber}`,
+            detectedLanguage: detectedLanguage
           });
           break;
         }
@@ -627,7 +629,8 @@ export default function App() {
         takes.push({
           text: takeText,
           displayText: convertTextForDisplay(takeText),
-          name: `Take_${takeNumber}`
+          name: `Take_${takeNumber}`,
+          detectedLanguage: detectedLanguage
         });
         remainingText = remainingText.slice(cutIndex).trim();
         takeNumber++;
@@ -712,21 +715,36 @@ export default function App() {
   };
 
   // 텍스트를 단어 단위로 분할(문장기호는 인접 단어와 합침, 가중치 부여)
-  const splitIntoWords = (text) => {
+  const splitIntoWords = (text, detectedLanguage = null) => {
     // text가 문자열이 아닌 경우 빈 배열 반환
     if (typeof text !== 'string') {
       console.warn('splitIntoWords: text is not a string:', text);
       return [];
     }
+    
+    // 언어 감지 (detectedLanguage이 없을 때만)
+    let isEnglish = false;
+    if (detectedLanguage) {
+      isEnglish = detectedLanguage === 'en';
+    } else {
+      // 백업: 첫 500자로 언어 감지
+      const sampleText = text.substring(0, Math.min(500, text.length));
+      isEnglish = /^[a-zA-Z\s.,!?]+$/.test(sampleText) || 
+                  (sampleText.match(/[a-zA-Z]/g) || []).length > (sampleText.match(/[\uAC00-\uD7AF\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g) || []).length;
+    }
+    
     // 단어+문장기호를 하나의 토큰으로 합침
     const wordRegex = /[^\s.,!?]+[.,!?]?|[.,!?]/g;
     const rawWords = text.match(wordRegex) || [];
     
-    // 가중치 부여: .은 0.75초(11자), ,?!는 0.5초(7자)
+    // 가중치 부여: 영문일 때 .은 0.5초(7자), 그 외는 0.75초(11자), ,?!는 0.5초(7자)
     return rawWords.map((word, idx) => {
       let weight = word.replace(/[.,!?]/g, '').length;
-      if (word.endsWith('.')) weight += 11;
-      else if (/[,!?]$/.test(word)) weight += 7;
+      if (word.endsWith('.')) {
+        weight += isEnglish ? 7 : 11; // 영문일 때 0.5초, 그 외는 0.75초
+      } else if (/[,!?]$/.test(word)) {
+        weight += 7; // 0.5초
+      }
       return {
         word,
         weight,
@@ -741,7 +759,9 @@ export default function App() {
     
     // 화면 표시용 텍스트로 단어 분할
     const displayText = take.displayText || convertTextForDisplay(take.text);
-    const words = splitIntoWords(displayText);
+    // take에 언어 정보가 있으면 사용, 없으면 null 전달
+    const detectedLanguage = take.detectedLanguage || null;
+    const words = splitIntoWords(displayText, detectedLanguage);
     
     if (!words.length) return 0;
     
@@ -1071,7 +1091,52 @@ export default function App() {
 
   // 현재 테이크 스크롤 (플로팅 버튼 높이 고려)
   const handleScrollCurrentTake = () => {
+    // 사용자가 스크롤 중인지 확인
+    let isUserScrolling = false;
+    
+    // PC/Mac: 마우스 휠, 트랙패드, 키보드 스크롤 감지
+    const handleWheel = (e) => {
+      isUserScrolling = true;
+      setTimeout(() => { isUserScrolling = false; }, 1500); // 1.5초 후 리셋
+    };
+    
+    const handleKeyDown = (e) => {
+      // Page Up/Down, Home/End, 화살표 키로 스크롤하는 경우
+      if (['PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        isUserScrolling = true;
+        setTimeout(() => { isUserScrolling = false; }, 1500);
+      }
+    };
+    
+    // 스크롤 이벤트로도 감지 (트랙패드 스크롤 포함)
+    const handleScroll = () => {
+      isUserScrolling = true;
+      setTimeout(() => { isUserScrolling = false; }, 1500);
+    };
+    
+    // 터치 스크린: 드래그 감지
+    let isDragging = false;
+    const handleTouchStart = () => {
+      isDragging = true;
+    };
+    const handleTouchEnd = () => {
+      setTimeout(() => { isDragging = false; }, 500); // 0.5초 후 리셋
+    };
+    
+    // 이벤트 리스너 등록
+    document.addEventListener('wheel', handleWheel, { passive: true });
+    document.addEventListener('keydown', handleKeyDown, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    
     setTimeout(() => {
+      // 사용자가 스크롤 중이면 자동 이동 중지
+      if (isUserScrolling || isDragging) {
+        console.log('사용자가 스크롤 중이므로 자동 이동 중지');
+        return;
+      }
+      
       const el = document.querySelector('.current-take');
       if (el) {
         const rect = el.getBoundingClientRect();
@@ -1083,6 +1148,13 @@ export default function App() {
           window.scrollTo({ top: scrollTop, behavior: 'smooth' });
         }
       }
+      
+      // 이벤트 리스너 제거
+      document.removeEventListener('wheel', handleWheel);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
     }, 0);
   };
 
