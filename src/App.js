@@ -3133,9 +3133,9 @@ export default function App() {
           <span>●</span>
         </Box>
         {/* DIM 처리된 테이크 공유(가위) 아이콘 */}
-        <Box sx={{ ...iconButtonStyle, fontSize: '80%', opacity: 0.7, pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
+        {/* <Box sx={{ ...iconButtonStyle, fontSize: '80%', opacity: 0.7, pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
           <span>✄</span>
-        </Box>
+        </Box> */}
         <Box 
           sx={{ 
             ...iconButtonStyle, 
