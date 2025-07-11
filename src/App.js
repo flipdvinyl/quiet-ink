@@ -1760,6 +1760,18 @@ export default function App() {
           setCurrentMaterial(null);
         }
         
+        // 음악캠프 콘텐츠가 선택된 경우 BGM 시작
+        if (materialEntry) {
+          const materialKey = Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]);
+          if (materialKey === 'musiccamp') {
+            setCurrentMaterial('musiccamp');
+            // 음악캠프 선택 시 즉시 BGM 재생
+            if (!isBgMusicPlaying) {
+              playBgMusic();
+            }
+          }
+        }
+        
         // 해당 소재의 목소리 매핑 적용
         if (materialEntry) {
           const material = materialEntry[1];
@@ -1775,16 +1787,6 @@ export default function App() {
             const randomVoice = VOICES[Math.floor(Math.random() * VOICES.length)];
             setPreset(p => ({ ...p, voice: randomVoice.name }));
             setSelectedVoice(randomVoice);
-          }
-          
-          // 음악캠프 콘텐츠가 선택된 경우 BGM 즉시 재생
-          const materialKey = Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]);
-          if (materialKey === 'musiccamp') {
-            setCurrentMaterial('musiccamp');
-            // 음악캠프 선택 시 즉시 BGM 재생
-            if (!isBgMusicPlaying) {
-              playBgMusic();
-            }
           }
         }
       }
