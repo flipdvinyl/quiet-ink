@@ -6,45 +6,10 @@ import {
   Alert, Fade, Backdrop
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT, WAYOFCODE_EN_TEXT } from './data/sampleTexts.js';
+import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT } from './data/sampleTexts.js';
+import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from './data/textContent.js';
 import defaultPreset from './presets/defaultPreset';
 import { franc } from 'franc';
-
-// 앱 기본 언어 설정 (kr: 한국어, en: 영어, ja: 일본어)
-const APP_LANGUAGE = 'kr';
-
-// 언어 감지 함수
-const detectLanguage = (text) => {
-  try {
-    // franc로 언어 감지
-    const detectedLang = franc(text, { minLength: 3 });
-    
-    // 감지된 언어를 지원 언어로 매핑
-    if (detectedLang === 'kor') return 'ko';
-    if (detectedLang === 'eng') return 'en';
-    if (detectedLang === 'jpn') return 'ja';
-    
-    // 유니코드 기반 감지 (백업)
-    const koreanChars = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
-    const japaneseChars = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
-    const englishChars = /[a-zA-Z]/;
-    
-    const hasKorean = koreanChars.test(text);
-    const hasJapanese = japaneseChars.test(text);
-    const hasEnglish = englishChars.test(text);
-    
-    // 우선순위: 한국어 > 일본어 > 영어
-    if (hasKorean) return 'ko';
-    if (hasJapanese) return 'ja';
-    if (hasEnglish) return 'en';
-    
-    // 기본값: 시스템 언어 (한국어)
-    return 'ko';
-  } catch (error) {
-    console.error('언어 감지 오류:', error);
-    return 'ko'; // 오류 시 기본값
-  }
-};
 
 const PopupCard = ({
   isOpen,
@@ -183,6 +148,16 @@ export default function App() {
   const diceIntervalRef = useRef(null);
   const ttsAbortControllerRef = useRef(null);
   const isUnloadingRef = useRef(false);
+  
+  // 언어 설정
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    try {
+      const saved = localStorage.getItem('audiobook-language');
+      return saved || DEFAULT_LANGUAGE;
+    } catch {
+      return DEFAULT_LANGUAGE;
+    }
+  });
   // iOS 오디오 정책 우회용: 최초 1회 무음 재생
   const mutePlayedRef = useRef(false);
   // 최신 isPaused 값을 참조하기 위한 ref
@@ -213,6 +188,13 @@ export default function App() {
     } catch {}
   }, [customVoiceId]);
 
+  // currentLanguage 변경 시 localStorage에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('audiobook-language', currentLanguage);
+    } catch {}
+  }, [currentLanguage]);
+
   const iconButtonStyle = {
     width: 30,
     height: 30,
@@ -234,6 +216,72 @@ export default function App() {
   const nonSpaceIndexes = titleChars
     .map((char, idx) => (char !== ' ' ? idx : null))
     .filter(idx => idx !== null);
+
+  // 언어 관련 유틸리티 함수
+  const getCurrentLanguageName = () => {
+    return SUPPORTED_LANGUAGES[currentLanguage] || '한국어';
+  };
+
+  const changeLanguage = (newLanguage) => {
+    if (SUPPORTED_LANGUAGES[newLanguage]) {
+      setCurrentLanguage(newLanguage);
+    }
+  };
+
+  // 언어 감지 함수
+  const detectLanguage = (text) => {
+    if (!text || typeof text !== 'string') {
+      return 'ko'; // 기본값
+    }
+
+    try {
+      // franc로 언어 감지
+      const francResult = franc(text);
+      
+      // franc 결과를 우리가 지원하는 언어로 매핑
+      const languageMap = {
+        'kor': 'ko', // 한국어
+        'eng': 'en', // 영어
+        'jpn': 'ja', // 일본어
+        'cmn': 'ko', // 중국어 간체 -> 한국어로 처리
+        'yue': 'ko', // 중국어 번체 -> 한국어로 처리
+      };
+
+      if (francResult && francResult !== 'und' && languageMap[francResult]) {
+        return languageMap[francResult];
+      }
+
+      // 유니코드 기반 감지 (백업 방법)
+      const unicodeRanges = {
+        ko: /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/, // 한글
+        ja: /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/, // 일본어 (히라가나, 카타카나, 한자)
+        en: /[\u0041-\u005A\u0061-\u007A]/, // 영어 (라틴 문자)
+      };
+
+      // 각 언어별 문자 수 계산
+      const charCounts = {
+        ko: (text.match(unicodeRanges.ko) || []).length,
+        ja: (text.match(unicodeRanges.ja) || []).length,
+        en: (text.match(unicodeRanges.en) || []).length,
+      };
+
+      // 가장 많은 문자를 가진 언어 선택
+      const maxLanguage = Object.entries(charCounts).reduce((a, b) => 
+        charCounts[a[0]] > charCounts[b[0]] ? a : b
+      );
+
+      // 최소 3개 이상의 문자가 있어야 해당 언어로 인정
+      if (maxLanguage[1] >= 3) {
+        return maxLanguage[0];
+      }
+
+      // 모든 방법이 실패하면 시스템 언어 반환
+      return currentLanguage;
+    } catch (error) {
+      console.error('언어 감지 오류:', error);
+      return currentLanguage;
+    }
+  };
 
   const [randomTitleIndex, setRandomTitleIndex] = useState(() =>
     Math.random() < 0.2 ? nonSpaceIndexes[Math.floor(Math.random() * nonSpaceIndexes.length)] : -1
@@ -699,9 +747,9 @@ export default function App() {
       console.log(`Original text: ${take.text}`);
       console.log(`API text: ${apiText}`);
       
-      // 언어 감지
-      const languageCode = detectLanguage(take.text);
-      console.log(`Detected language: ${languageCode}`);
+      // 테이크의 언어 감지
+      const detectedLanguage = detectLanguage(take.text);
+      console.log(`Detected language for take: ${detectedLanguage}`);
       
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
       const response = await fetch(`${apiUrl}/api/tts`, {
@@ -710,7 +758,7 @@ export default function App() {
         body: JSON.stringify({ 
           text: apiText, 
           voice_id: useVoiceId,
-          language: languageCode 
+          language: detectedLanguage 
         }),
         signal
       });
@@ -1428,26 +1476,6 @@ export default function App() {
       handler: (e) => {
         e.preventDefault();
         setText(WAYOFCODE_TEXT);
-        // 릭 루빈 목소리로 변경
-        const rickVoice = VOICES.find(v => v.name === "릭 루빈");
-        if (rickVoice) {
-          setPreset(p => ({ ...p, voice: rickVoice.name }));
-          setSelectedVoice(rickVoice);
-        }
-        // 배경음악 정지
-        if (currentMaterial === 'musiccamp') {
-          stopBgMusic();
-          setCurrentMaterial(null);
-        }
-      }
-    },
-    wayofcode_en: {
-      name: "THE WAY OF CODE_EN",
-      list: [WAYOFCODE_EN_TEXT],
-      voiceMapping: "릭 루빈",
-      handler: (e) => {
-        e.preventDefault();
-        setText(WAYOFCODE_EN_TEXT);
         // 릭 루빈 목소리로 변경
         const rickVoice = VOICES.find(v => v.name === "릭 루빈");
         if (rickVoice) {
@@ -2337,14 +2365,9 @@ export default function App() {
                   onClick: handleRandomNews
                 },
                 {
-                  label: '- 코드의 길 / 번역본 ',
+                  label: '- THE WAY OF CODE',
                   text: 'THE WAY OF CODE',
                   onClick: MATERIALS.wayofcode.handler
-                },
-                {
-                  label: '- THE WAY OF CODE',
-                  text: 'THE WAY OF CODE_EN',
-                  onClick: MATERIALS.wayofcode_en.handler
                 }
               ];
               if (isTabletPC) {
