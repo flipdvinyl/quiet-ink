@@ -9,7 +9,6 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT } from './data/sampleTexts.js';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from './data/textContent.js';
 import defaultPreset from './presets/defaultPreset';
-import { franc } from 'franc';
 
 const PopupCard = ({
   isOpen,
@@ -229,14 +228,34 @@ export default function App() {
   };
 
   // 언어 감지 함수
-  const detectLanguage = (text) => {
+  const detectLanguage = async (text) => {
     if (!text || typeof text !== 'string') {
+      console.log('언어 감지: 빈 텍스트 또는 유효하지 않은 텍스트');
       return 'ko'; // 기본값
     }
 
+    console.log('언어 감지 시작:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+
     try {
+      // franc 라이브러리 동적 import
+      let franc;
+      try {
+        const francModule = await import('franc');
+        franc = francModule.franc;
+      } catch (importError) {
+        console.warn('franc 라이브러리 import 실패:', importError);
+        throw new Error('franc import failed');
+      }
+
+      // franc 라이브러리 사용 가능 여부 확인
+      if (typeof franc !== 'function') {
+        console.warn('franc 라이브러리를 사용할 수 없습니다. 유니코드 기반 감지로 대체합니다.');
+        throw new Error('franc not available');
+      }
+
       // franc로 언어 감지
       const francResult = franc(text);
+      console.log('franc 감지 결과:', francResult);
       
       // franc 결과를 우리가 지원하는 언어로 매핑
       const languageMap = {
@@ -248,8 +267,11 @@ export default function App() {
       };
 
       if (francResult && francResult !== 'und' && languageMap[francResult]) {
+        console.log('franc 기반 언어 감지 성공:', francResult, '->', languageMap[francResult]);
         return languageMap[francResult];
       }
+
+      console.log('franc 감지 실패, 유니코드 기반 감지로 대체');
 
       // 유니코드 기반 감지 (백업 방법)
       const unicodeRanges = {
@@ -265,20 +287,53 @@ export default function App() {
         en: (text.match(unicodeRanges.en) || []).length,
       };
 
+      console.log('유니코드 기반 문자 수:', charCounts);
+
       // 가장 많은 문자를 가진 언어 선택
       const maxLanguage = Object.entries(charCounts).reduce((a, b) => 
         charCounts[a[0]] > charCounts[b[0]] ? a : b
       );
 
+      console.log('최대 문자 언어:', maxLanguage);
+
       // 최소 3개 이상의 문자가 있어야 해당 언어로 인정
       if (maxLanguage[1] >= 3) {
+        console.log('유니코드 기반 언어 감지 성공:', maxLanguage[0]);
         return maxLanguage[0];
       }
 
+      console.log('모든 감지 방법 실패, 시스템 언어 사용:', currentLanguage);
       // 모든 방법이 실패하면 시스템 언어 반환
       return currentLanguage;
     } catch (error) {
       console.error('언어 감지 오류:', error);
+      
+      // 오류 발생 시 유니코드 기반 감지만 시도
+      try {
+        const unicodeRanges = {
+          ko: /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/, // 한글
+          ja: /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/, // 일본어 (히라가나, 카타카나, 한자)
+          en: /[\u0041-\u005A\u0061-\u007A]/, // 영어 (라틴 문자)
+        };
+
+        const charCounts = {
+          ko: (text.match(unicodeRanges.ko) || []).length,
+          ja: (text.match(unicodeRanges.ja) || []).length,
+          en: (text.match(unicodeRanges.en) || []).length,
+        };
+
+        const maxLanguage = Object.entries(charCounts).reduce((a, b) => 
+          charCounts[a[0]] > charCounts[b[0]] ? a : b
+        );
+
+        if (maxLanguage[1] >= 3) {
+          console.log('오류 후 유니코드 기반 감지 성공:', maxLanguage[0]);
+          return maxLanguage[0];
+        }
+      } catch (fallbackError) {
+        console.error('백업 언어 감지도 실패:', fallbackError);
+      }
+      
       return currentLanguage;
     }
   };
@@ -748,10 +803,17 @@ export default function App() {
       console.log(`API text: ${apiText}`);
       
       // 테이크의 언어 감지
-      const detectedLanguage = detectLanguage(take.text);
+      const detectedLanguage = await detectLanguage(take.text);
       console.log(`Detected language for take: ${detectedLanguage}`);
+      console.log(`API 요청 데이터:`, { 
+        text: apiText.substring(0, 100) + (apiText.length > 100 ? '...' : ''), 
+        voice_id: useVoiceId,
+        language: detectedLanguage 
+      });
       
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
+      console.log(`API URL: ${apiUrl}`);
+      
       const response = await fetch(`${apiUrl}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
