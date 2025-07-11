@@ -6,8 +6,45 @@ import {
   Alert, Fade, Backdrop
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT } from './data/sampleTexts.js';
+import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT, WAYOFCODE_EN_TEXT } from './data/sampleTexts.js';
 import defaultPreset from './presets/defaultPreset';
+import { franc } from 'franc';
+
+// 앱 기본 언어 설정 (kr: 한국어, en: 영어, ja: 일본어)
+const APP_LANGUAGE = 'kr';
+
+// 언어 감지 함수
+const detectLanguage = (text) => {
+  try {
+    // franc로 언어 감지
+    const detectedLang = franc(text, { minLength: 3 });
+    
+    // 감지된 언어를 지원 언어로 매핑
+    if (detectedLang === 'kor') return 'ko';
+    if (detectedLang === 'eng') return 'en';
+    if (detectedLang === 'jpn') return 'ja';
+    
+    // 유니코드 기반 감지 (백업)
+    const koreanChars = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+    const japaneseChars = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+    const englishChars = /[a-zA-Z]/;
+    
+    const hasKorean = koreanChars.test(text);
+    const hasJapanese = japaneseChars.test(text);
+    const hasEnglish = englishChars.test(text);
+    
+    // 우선순위: 한국어 > 일본어 > 영어
+    if (hasKorean) return 'ko';
+    if (hasJapanese) return 'ja';
+    if (hasEnglish) return 'en';
+    
+    // 기본값: 시스템 언어 (한국어)
+    return 'ko';
+  } catch (error) {
+    console.error('언어 감지 오류:', error);
+    return 'ko'; // 오류 시 기본값
+  }
+};
 
 const PopupCard = ({
   isOpen,
@@ -662,11 +699,19 @@ export default function App() {
       console.log(`Original text: ${take.text}`);
       console.log(`API text: ${apiText}`);
       
+      // 언어 감지
+      const languageCode = detectLanguage(take.text);
+      console.log(`Detected language: ${languageCode}`);
+      
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
       const response = await fetch(`${apiUrl}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: apiText, voice_id: useVoiceId }),
+        body: JSON.stringify({ 
+          text: apiText, 
+          voice_id: useVoiceId,
+          language: languageCode 
+        }),
         signal
       });
       
@@ -1383,6 +1428,26 @@ export default function App() {
       handler: (e) => {
         e.preventDefault();
         setText(WAYOFCODE_TEXT);
+        // 릭 루빈 목소리로 변경
+        const rickVoice = VOICES.find(v => v.name === "릭 루빈");
+        if (rickVoice) {
+          setPreset(p => ({ ...p, voice: rickVoice.name }));
+          setSelectedVoice(rickVoice);
+        }
+        // 배경음악 정지
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
+        }
+      }
+    },
+    wayofcode_en: {
+      name: "THE WAY OF CODE_EN",
+      list: [WAYOFCODE_EN_TEXT],
+      voiceMapping: "릭 루빈",
+      handler: (e) => {
+        e.preventDefault();
+        setText(WAYOFCODE_EN_TEXT);
         // 릭 루빈 목소리로 변경
         const rickVoice = VOICES.find(v => v.name === "릭 루빈");
         if (rickVoice) {
@@ -2272,9 +2337,14 @@ export default function App() {
                   onClick: handleRandomNews
                 },
                 {
-                  label: '- THE WAY OF CODE',
+                  label: '- 코드의 길 / 번역본 ',
                   text: 'THE WAY OF CODE',
                   onClick: MATERIALS.wayofcode.handler
+                },
+                {
+                  label: '- THE WAY OF CODE',
+                  text: 'THE WAY OF CODE_EN',
+                  onClick: MATERIALS.wayofcode_en.handler
                 }
               ];
               if (isTabletPC) {
