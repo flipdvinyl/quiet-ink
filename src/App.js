@@ -6,7 +6,7 @@ import {
   Alert, Fade, Backdrop
 } from "@mui/material";
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT } from './data/sampleTexts.js';
+import { SAMPLE_NEWS_LIST, LITERATURE_QUOTES, MUSICCAMP_QUOTES, ESSAY_TEXT, SONAGI_TEXT, WAYOFCODE_TEXT, WAYOFCODE_EN_TEXT } from './data/sampleTexts.js';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from './data/textContent.js';
 import defaultPreset from './presets/defaultPreset';
 
@@ -1532,7 +1532,7 @@ export default function App() {
       }
     },
     wayofcode: {
-      name: "THE WAY OF CODE",
+      name: "코드의 길 / 번역본",
       list: [WAYOFCODE_TEXT],
       voiceMapping: "릭 루빈",
       handler: (e) => {
@@ -2427,9 +2427,28 @@ export default function App() {
                   onClick: handleRandomNews
                 },
                 {
+                  label: '- 코드의 길 / 번역본',
+                  text: '코드의 길 / 번역본',
+                  onClick: MATERIALS.wayofcode.handler
+                },
+                {
                   label: '- THE WAY OF CODE',
                   text: 'THE WAY OF CODE',
-                  onClick: MATERIALS.wayofcode.handler
+                  onClick: (e) => {
+                    e.preventDefault();
+                    setText(WAYOFCODE_EN_TEXT);
+                    // 릭 루빈 목소리로 변경
+                    const rickVoice = VOICES.find(v => v.name === "릭 루빈");
+                    if (rickVoice) {
+                      setPreset(p => ({ ...p, voice: rickVoice.name }));
+                      setSelectedVoice(rickVoice);
+                    }
+                    // 배경음악 정지
+                    if (currentMaterial === 'musiccamp') {
+                      stopBgMusic();
+                      setCurrentMaterial(null);
+                    }
+                  }
                 }
               ];
               if (isTabletPC) {
