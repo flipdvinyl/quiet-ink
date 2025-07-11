@@ -2480,6 +2480,40 @@ export default function App() {
     setAutoPlayPendingIndex(idx);
   };
 
+  // 플로팅 버튼 텍스트 스케일 관련
+  const floatingTextRef = useRef(null);
+  const [floatingTextScale, setFloatingTextScale] = useState(1);
+  
+  // 텍스트 스케일 조정 함수
+  const adjustFloatingTextScale = () => {
+    if (!floatingTextRef.current) return;
+    
+    const textElement = floatingTextRef.current;
+    const containerWidth = textElement.parentElement.offsetWidth;
+    const textWidth = textElement.scrollWidth;
+    const maxWidth = containerWidth * 0.8; // 80% 제한
+    
+    if (textWidth > maxWidth) {
+      const newScale = maxWidth / textWidth;
+      setFloatingTextScale(Math.max(newScale, 0.5)); // 최소 50% 스케일
+    } else {
+      setFloatingTextScale(1);
+    }
+  };
+  
+  // 플로팅 버튼 텍스트 스케일 조정 useEffect
+  useEffect(() => {
+    const adjustScale = () => {
+      setTimeout(adjustFloatingTextScale, 0);
+    };
+    
+    adjustScale();
+    
+    // 윈도우 리사이즈 시에도 스케일 조정
+    window.addEventListener('resize', adjustScale);
+    return () => window.removeEventListener('resize', adjustScale);
+  }, [isPlaying, isPaused, selectedVoice.name]); // 텍스트가 변경될 때마다 실행
+
   return (
     <Box sx={{ bgcolor: isSamgukjiFont() ? '#0e1755' : theme.background, minHeight: "100vh", color: isSamgukjiFont() ? '#ffffff' : theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
       <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: isSamgukjiFont() ? '#0e1755' : theme.background, color: isSamgukjiFont() ? '#ffffff' : theme.text, transition: 'all 0.3s', boxShadow: 'none' }}>
@@ -3156,7 +3190,15 @@ export default function App() {
               handleTTS();
             }}
           >
-            <span style={{ display: 'inline-block' }}>
+            <span 
+              ref={floatingTextRef}
+              style={{ 
+                display: 'inline-block',
+                transform: `scale(${floatingTextScale})`,
+                transformOrigin: 'center',
+                transition: 'transform 0.3s ease'
+              }}
+            >
               {/* 기존 텍스트 렌더링 로직 그대로 */}
               {isPlaying && !isPaused ? (
                 <span style={{ cursor: 'pointer' }}>
