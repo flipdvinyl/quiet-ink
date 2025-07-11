@@ -1015,12 +1015,9 @@ export default function App() {
       
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 150); // UI 전환 후 스크롤
       
-      // 테이크 화면으로 넘어갈 때 배경음악 시작 (BGM이 있는 소재인 경우)
-      if (currentMaterial) {
-        const material = MATERIALS[currentMaterial];
-        if (material && material.bgm && !isBgMusicPlaying) {
-          playBgMusic();
-        }
+      // 테이크 화면으로 넘어갈 때 배경음악 시작 (음악캠프인 경우)
+      if (currentMaterial === 'musiccamp' && !isBgMusicPlaying) {
+        playBgMusic();
       }
       
       setFadeIn(true);
@@ -1584,7 +1581,6 @@ export default function App() {
       name: "수퍼톤 소식",
       list: SAMPLE_NEWS_LIST,
       voiceMapping: null, // 랜덤 목소리
-      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1598,7 +1594,7 @@ export default function App() {
         setPreset(p => ({ ...p, voice: randomVoice.name }));
         setSelectedVoice(randomVoice);
         // 배경음악 정지
-        if (currentMaterial && currentMaterial !== 'news') {
+        if (currentMaterial === 'musiccamp') {
           stopBgMusic();
           setCurrentMaterial(null);
         }
@@ -1608,7 +1604,6 @@ export default function App() {
       name: "코드의 길 / 번역본",
       list: [WAYOFCODE_TEXT],
       voiceMapping: "릭 루빈",
-      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(WAYOFCODE_TEXT);
@@ -1619,7 +1614,7 @@ export default function App() {
           setSelectedVoice(rickVoice);
         }
         // 배경음악 정지
-        if (currentMaterial && currentMaterial !== 'wayofcode') {
+        if (currentMaterial === 'musiccamp') {
           stopBgMusic();
           setCurrentMaterial(null);
         }
@@ -1629,7 +1624,6 @@ export default function App() {
       name: "THE WAY OF CODE",
       list: [WAYOFCODE_EN_TEXT],
       voiceMapping: "릭 루빈",
-      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(WAYOFCODE_EN_TEXT);
@@ -1640,7 +1634,7 @@ export default function App() {
           setSelectedVoice(rickVoice);
         }
         // 배경음악 정지
-        if (currentMaterial && currentMaterial !== 'wayofcode_en') {
+        if (currentMaterial === 'musiccamp') {
           stopBgMusic();
           setCurrentMaterial(null);
         }
@@ -1650,7 +1644,6 @@ export default function App() {
       name: "예술책 한 페이지",
       list: LITERATURE_QUOTES,
       voiceMapping: null, // 랜덤 목소리
-      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1664,7 +1657,7 @@ export default function App() {
         setPreset(p => ({ ...p, voice: randomVoice.name }));
         setSelectedVoice(randomVoice);
         // 배경음악 정지
-        if (currentMaterial && currentMaterial !== 'literature') {
+        if (currentMaterial === 'musiccamp') {
           stopBgMusic();
           setCurrentMaterial(null);
         }
@@ -1674,7 +1667,6 @@ export default function App() {
       name: "배철수의 음악캠프 오프닝",
       list: MUSICCAMP_QUOTES,
       voiceMapping: "송골매 기타리스트",
-      bgm: '/bgm_musiccamp.mp3', // BGM 파일 경로
       handler: (e) => {
         e.preventDefault();
         let currentText = text;
@@ -1697,7 +1689,6 @@ export default function App() {
       name: "보통의 존재",
       list: [ESSAY_TEXT],
       voiceMapping: "이석원",
-      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(ESSAY_TEXT);
@@ -1708,7 +1699,7 @@ export default function App() {
           setSelectedVoice(seokwonVoice);
         }
         // 배경음악 정지
-        if (currentMaterial && currentMaterial !== 'essay') {
+        if (currentMaterial === 'musiccamp') {
           stopBgMusic();
           setCurrentMaterial(null);
         }
@@ -1718,7 +1709,6 @@ export default function App() {
       name: "소나기",
       list: [SONAGI_TEXT],
       voiceMapping: "출판사 『무제』 사장",
-      bgm: null, // BGM 없음
       handler: (e) => {
         e.preventDefault();
         setText(SONAGI_TEXT);
@@ -1729,7 +1719,7 @@ export default function App() {
           setSelectedVoice(publisherVoice);
         }
         // 배경음악 정지
-        if (currentMaterial && currentMaterial !== 'sonagi') {
+        if (currentMaterial === 'musiccamp') {
           stopBgMusic();
           setCurrentMaterial(null);
         }
@@ -1739,7 +1729,6 @@ export default function App() {
       name: "아무 글이나",
       list: [],
       voiceMapping: null, // 동적으로 결정
-      bgm: null, // 동적으로 결정
       handler: (e) => {
         e.preventDefault();
         // 모든 소재의 모든 글감을 하나의 배열로
@@ -1766,19 +1755,9 @@ export default function App() {
         setText(randomText);
         
         // 배경음악 처리
-        if (currentMaterial && materialEntry) {
-          const materialKey = Object.keys(MATERIALS).find(key => MATERIALS[key] === materialEntry[1]);
-          if (materialKey) {
-            setCurrentMaterial(materialKey);
-            // BGM이 있는 소재인 경우 재생
-            const material = MATERIALS[materialKey];
-            if (material && material.bgm && !isBgMusicPlaying) {
-              playBgMusic();
-            } else if (!material.bgm && currentMaterial) {
-              // BGM이 없는 소재로 변경 시 기존 BGM 정지
-              stopBgMusic();
-            }
-          }
+        if (currentMaterial === 'musiccamp') {
+          stopBgMusic();
+          setCurrentMaterial(null);
         }
         
         // 해당 소재의 목소리 매핑 적용
@@ -1808,56 +1787,46 @@ export default function App() {
 
   // 배경음악 초기화
   useEffect(() => {
-    // BGM은 필요할 때 동적으로 생성하도록 변경
+    const music = new Audio('/bgm_musiccamp.mp3');
+    music.loop = true;
+    music.volume = 0.3; // 30% 볼륨
+    setBgMusic(music);
+    
     return () => {
-      if (bgMusic) {
-        bgMusic.pause();
-        bgMusic.src = '';
+      if (music) {
+        music.pause();
+        music.src = '';
       }
     };
   }, []);
 
   // 배경음악 재생/정지 함수
   const playBgMusic = () => {
-    if (!currentMaterial) return;
-    
-    const material = MATERIALS[currentMaterial];
-    if (!material || !material.bgm) return;
-    
-    // 기존 BGM 정지
     if (bgMusic) {
-      bgMusic.pause();
-      bgMusic.src = '';
+      bgMusic.currentTime = 22; // 22초부터 시작
+      bgMusic.volume = 0; // 처음에는 볼륨 0
+      bgMusic.play().then(() => {
+        setIsBgMusicPlaying(true);
+        // 3초 동안 페이드 인
+        let volume = 0;
+        const fadeInInterval = setInterval(() => {
+          volume += 0.3 / 30; // 3초(30 * 100ms) 동안 0.3까지 증가
+          if (volume >= 0.3) {
+            volume = 0.3;
+            clearInterval(fadeInInterval);
+          }
+          bgMusic.volume = volume;
+        }, 100);
+      }).catch(err => {
+        console.error('배경음악 재생 실패:', err);
+      });
     }
-    
-    // 새로운 BGM 생성
-    const music = new Audio(material.bgm);
-    music.loop = true;
-    music.volume = 0; // 처음에는 볼륨 0
-    setBgMusic(music);
-    
-    music.play().then(() => {
-      setIsBgMusicPlaying(true);
-      // 3초 동안 페이드 인
-      let volume = 0;
-      const fadeInInterval = setInterval(() => {
-        volume += 0.3 / 30; // 3초(30 * 100ms) 동안 0.3까지 증가
-        if (volume >= 0.3) {
-          volume = 0.3;
-          clearInterval(fadeInInterval);
-        }
-        music.volume = volume;
-      }, 100);
-    }).catch(err => {
-      console.error('배경음악 재생 실패:', err);
-    });
   };
 
   const stopBgMusic = () => {
     if (bgMusic) {
       bgMusic.pause();
       bgMusic.currentTime = 0;
-      bgMusic.src = '';
       setIsBgMusicPlaying(false);
     }
   };
@@ -1870,14 +1839,11 @@ export default function App() {
   };
 
   const resumeBgMusic = () => {
-    if (bgMusic && !isBgMusicPlaying && currentMaterial) {
-      const material = MATERIALS[currentMaterial];
-      if (material && material.bgm) {
-        bgMusic.play().catch(err => {
-          console.error('배경음악 재개 실패:', err);
-        });
-        setIsBgMusicPlaying(true);
-      }
+    if (bgMusic && !isBgMusicPlaying && currentMaterial === 'musiccamp') {
+      bgMusic.play().catch(err => {
+        console.error('배경음악 재개 실패:', err);
+      });
+      setIsBgMusicPlaying(true);
     }
   };
 
