@@ -2489,9 +2489,9 @@ export default function App() {
     if (!floatingTextRef.current) return;
     
     const textElement = floatingTextRef.current;
-    const containerWidth = textElement.parentElement.offsetWidth;
     const textWidth = textElement.scrollWidth;
-    const maxWidth = containerWidth * 0.8; // 80% 제한
+    const windowWidth = window.innerWidth;
+    const maxWidth = windowWidth * 0.8; // 전체 브라우저 폭의 80% 제한
     
     if (textWidth > maxWidth) {
       const newScale = maxWidth / textWidth;
