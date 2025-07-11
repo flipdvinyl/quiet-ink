@@ -3159,7 +3159,7 @@ export default function App() {
       <Box
         sx={{
           position: 'fixed',
-          right: '2%',
+          right: '1.5%',
           top: '50%',
           transform: `translateY(-50%) scale(${isTabletPC ? 1.0 : 1})`,
           zIndex: 2100,

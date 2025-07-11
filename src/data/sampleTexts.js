@@ -1372,7 +1372,7 @@ All rights reserved. Privacy Policy
 `;
 
 export const WAYOFCODE_EN_TEXT = `THE WAY OF CODE
-The Timeless Art of Vibe Coding
+- The Timeless Art of Vibe Coding
 
 Based on Lao Tzu
 Adapted by Rick Rubin
