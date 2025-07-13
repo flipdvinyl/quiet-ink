@@ -39,6 +39,15 @@ const hapticFeedback = {
       const pattern = Array(100).fill(10); // 10ms 진동, 10ms 간격으로 1초간
       navigator.vibrate(pattern);
     }
+  },
+  
+  // 팝업 애니메이션용 지속 진동 (700ms 동안 연속 진동)
+  popupAnimation: () => {
+    if ('vibrate' in navigator) {
+      // 700ms 동안 연속적인 진동 (팝업 애니메이션 시간과 동일)
+      const pattern = Array(70).fill(10); // 10ms 진동, 10ms 간격으로 700ms
+      navigator.vibrate(pattern);
+    }
   }
 };
 
@@ -2056,16 +2065,30 @@ export default function App() {
   useEffect(() => {
     if (voiceMenuOpen) {
       setRandomPopupInitialValues();
-      hapticFeedback.lightestContinuous(); // 팝업 시작 시 지속 진동
+      hapticFeedback.popupAnimation(); // 팝업 시작 시 애니메이션 진동
     }
   }, [voiceMenuOpen]);
+  
+  // 팝업 닫힐 때 진동
+  useEffect(() => {
+    if (isClosing) {
+      hapticFeedback.popupAnimation(); // 팝업 닫힐 때 애니메이션 진동
+    }
+  }, [isClosing]);
 
   // showGptGuide 상태 변경 시 햅틱 피드백
   useEffect(() => {
     if (showGptGuide) {
-      hapticFeedback.lightestContinuous(); // GPT 가이드 팝업 시작 시 지속 진동
+      hapticFeedback.popupAnimation(); // GPT 가이드 팝업 시작 시 애니메이션 진동
     }
   }, [showGptGuide]);
+  
+  // GPT 가이드 닫힐 때 진동
+  useEffect(() => {
+    if (isGptGuideClosing) {
+      hapticFeedback.popupAnimation(); // GPT 가이드 닫힐 때 애니메이션 진동
+    }
+  }, [isGptGuideClosing]);
 
   // 클립보드에서 Voice ID를 가져와 설정하는 핸들러
   const handleCustomVoiceIdPaste = async () => {
