@@ -2065,28 +2065,28 @@ export default function App() {
   useEffect(() => {
     if (voiceMenuOpen) {
       setRandomPopupInitialValues();
-      hapticFeedback.popupAnimation(); // 팝업 시작 시 애니메이션 진동
+      hapticFeedback.light(); // 팝업 시작 시 1회 진동
     }
   }, [voiceMenuOpen]);
   
   // 팝업 닫힐 때 진동
   useEffect(() => {
     if (isClosing) {
-      hapticFeedback.popupAnimation(); // 팝업 닫힐 때 애니메이션 진동
+      hapticFeedback.light(); // 팝업 닫힐 때 1회 진동
     }
   }, [isClosing]);
 
   // showGptGuide 상태 변경 시 햅틱 피드백
   useEffect(() => {
     if (showGptGuide) {
-      hapticFeedback.popupAnimation(); // GPT 가이드 팝업 시작 시 애니메이션 진동
+      hapticFeedback.light(); // GPT 가이드 팝업 시작 시 1회 진동
     }
   }, [showGptGuide]);
   
   // GPT 가이드 닫힐 때 진동
   useEffect(() => {
     if (isGptGuideClosing) {
-      hapticFeedback.popupAnimation(); // GPT 가이드 닫힐 때 애니메이션 진동
+      hapticFeedback.light(); // GPT 가이드 닫힐 때 1회 진동
     }
   }, [isGptGuideClosing]);
 
