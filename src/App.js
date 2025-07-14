@@ -1627,6 +1627,14 @@ export default function App() {
       setIsClosing(false);
       stopPlaying();
       audioBufferRef.current = {}; // 버퍼 완전 초기화
+      // takes 배열의 각 테이크의 voiceId를 새로 갱신
+      setTakes(prevTakes => prevTakes.map(take => {
+        // ::VoiceID::가 없는 테이크는 새로 선택한 voice.id로 덮어쓰기
+        if (!take.voiceId) {
+          return { ...take, voiceId: voice.id };
+        }
+        return take;
+      }));
       setTimeout(() => handlePlayFromTake(currentTake, voice.id), 0);
     }, 1000);
   };
