@@ -494,6 +494,9 @@ export default function App() {
     { name: '이석원', id: '6ay4URFxK9bry6z7zMDBLP', description: '은 말보다 침묵에 가까운 사람이지요. 그의 시선엔 쓸쓸함과 따뜻함이 함께 있고, 목소리는 그의 노래처럼 차분하고 조용하지만 오래 남거든요.' },
     { name: '출판사 『무제』 사장', id: 'k3nWGietavXL1CA7oksXZ9', description: '은 베일에 싸여 있어요. 배우라는 설도 있지만 낭설일 뿐이지요. 『쓸 만한 인간』이라는 말도 들어요.' },
     { name: '송골매 기타리스트', id: '9BxbNLZ349CPuYpLUmBDYa', description: '가 누구인지 아는사람들 모여라~! 세상만사 모든일이 뜻대로야 되겠소만 어쩌다 마주친 그대처럼 우리 모두 다 사랑하리~' },
+    // 추가: 소년, 소녀
+    { name: '소년', id: '4MvvJLQnDUoBMojLQ8YhTW', description: '은 개울가 징검다리에서 소녀를 기다리고, 그녀가 건넌 흰 조약돌을 소중히 간직하는 조심스러운 아이예요.' },
+    { name: '소녀', id: '1pREPnx17ahNcRvUfdhR8', description: '는 ‘이 바보‘라며 웃으며 조약돌을 던지고, 수숫단 속에서 소년에게 몸을 기댄 채 조용히 따뜻함을 나누는 섬세한 아이예요.' },
   ];
   // selectedVoice는 프리셋의 voice(name)와 동기화
   const [selectedVoice, setSelectedVoice] = useState(() => {
