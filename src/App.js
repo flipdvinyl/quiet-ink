@@ -1006,7 +1006,7 @@ export default function App() {
 
   // 다음 Take 미리 생성
   const prepareNextTake = async (nextIndex, voiceId, signal) => {
-    // const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
+    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     if (nextIndex >= takesRef.current.length || audioBufferRef.current[nextIndex]) {
       console.log(`Skip preparing take ${nextIndex}: ${nextIndex >= takesRef.current.length ? 'end of takes' : 'already in buffer'}`);
       return;
@@ -1015,7 +1015,8 @@ export default function App() {
       console.log(`Preparing take ${nextIndex}`);
       setFadeIn(true);
       setGeneratingTake(nextIndex);
-      const audioUrl = await convertToSpeech(takesRef.current[nextIndex], null, signal);
+      const audioUrl = await convertToSpeech(takesRef.current[nextIndex], takesRef.current[nextIndex].voiceId ? undefined : useVoiceId, signal);
+      console.log(`Successfully prepared take ${nextIndex}, URL: ${audioUrl}`);
       audioBufferRef.current[nextIndex] = audioUrl;
       // 생성 완료 시 애니메이션 중지 (현재 생성중인 테이크가 지금 끝난 테이크와 같다면)
       setGeneratingTake(currentGeneratingTake => {
@@ -1120,7 +1121,7 @@ export default function App() {
       
       // 첫 테이크 생성 시작 시점 기록 (음악캠프용)
       takeScreenEnterTimeRef.current = Date.now();
-      const firstTakeUrl = await convertToSpeech(textTakes[0], null, signal);
+      const firstTakeUrl = await convertToSpeech(textTakes[0], textTakes[0].voiceId ? undefined : null, signal);
       audioBufferRef.current = { 0: firstTakeUrl };
       if (textTakes.length > 1) {
         prepareNextTake(1, null, signal);
@@ -1391,14 +1392,14 @@ export default function App() {
 
     setLoading(true);
     setIsPlaying(true);
-    // const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
+    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     try {
       setFadeIn(true);
       setGeneratingTake(startIndex);
-      const url = await convertToSpeech(takesRef.current[startIndex], null, signal);
+      const url = await convertToSpeech(takesRef.current[startIndex], takesRef.current[startIndex].voiceId ? undefined : useVoiceId, signal);
       audioBufferRef.current = { [startIndex]: url };
       if (startIndex < takesRef.current.length - 1) {
-        prepareNextTake(startIndex + 1, null, signal);
+        prepareNextTake(startIndex + 1, useVoiceId, signal);
       }
       playTake(startIndex);
     } catch (e) {
@@ -1627,14 +1628,6 @@ export default function App() {
       setIsClosing(false);
       stopPlaying();
       audioBufferRef.current = {}; // 버퍼 완전 초기화
-      // takes 배열의 각 테이크의 voiceId를 새로 갱신
-      setTakes(prevTakes => prevTakes.map(take => {
-        // ::VoiceID::가 없는 테이크는 새로 선택한 voice.id로 덮어쓰기
-        if (!take.voiceId) {
-          return { ...take, voiceId: voice.id };
-        }
-        return take;
-      }));
       setTimeout(() => handlePlayFromTake(currentTake, voice.id), 0);
     }, 1000);
   };
@@ -2351,7 +2344,7 @@ export default function App() {
           
           // 첫 테이크 생성 시작 시점 기록 (음악캠프용)
           takeScreenEnterTimeRef.current = Date.now();
-          const firstTakeUrl = await convertToSpeech(newTakes[0], null, signal);
+          const firstTakeUrl = await convertToSpeech(newTakes[0], newTakes[0].voiceId ? undefined : null, signal);
           if (signal.aborted) {
             console.log('Dice click action was aborted before playing.');
             return;
