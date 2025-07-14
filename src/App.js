@@ -653,7 +653,16 @@ export default function App() {
           const voiceNameMatch = remainingText.match(/^::([^:]+)::/);
           if (voiceNameMatch) {
             const voiceName = voiceNameMatch[1];
-            const foundVoice = VOICES.find(v => v.name === voiceName);
+            let foundVoice = VOICES.find(v => v.name === voiceName);
+            if (!foundVoice) {
+              // 유사도 0.75 이상인 보이스 찾기
+              let best = {sim: 0, v: null};
+              for (const v of VOICES) {
+                const sim = similarity(voiceName, v.name);
+                if (sim > best.sim) best = {sim, v};
+              }
+              if (best.sim >= 0.75) foundVoice = best.v;
+            }
             if (foundVoice) {
               voiceId = foundVoice.id;
               cleanText = remainingText.replace(/^::[^:]+::/, '').trim();
@@ -699,7 +708,16 @@ export default function App() {
         const voiceNameMatch = takeText.match(/^::([^:]+)::/);
         if (voiceNameMatch) {
           const voiceName = voiceNameMatch[1];
-          const foundVoice = VOICES.find(v => v.name === voiceName);
+          let foundVoice = VOICES.find(v => v.name === voiceName);
+          if (!foundVoice) {
+            // 유사도 0.75 이상인 보이스 찾기
+            let best = {sim: 0, v: null};
+            for (const v of VOICES) {
+              const sim = similarity(voiceName, v.name);
+              if (sim > best.sim) best = {sim, v};
+            }
+            if (best.sim >= 0.75) foundVoice = best.v;
+          }
           if (foundVoice) {
             voiceId = foundVoice.id;
             cleanText = takeText.replace(/^::[^:]+::/, '').trim();
@@ -2564,6 +2582,37 @@ export default function App() {
     window.addEventListener('resize', adjustScale);
     return () => window.removeEventListener('resize', adjustScale);
   }, [isPlaying, isPaused, selectedVoice.name]); // 텍스트가 변경될 때마다 실행
+
+  // 문자열 유사도(Levenshtein 거리 기반) 계산 함수 추가
+  function similarity(a, b) {
+    if (!a || !b) return 0;
+    a = a.toLowerCase();
+    b = b.toLowerCase();
+    if (a === b) return 1;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+    const distance = matrix[b.length][a.length];
+    const maxLen = Math.max(a.length, b.length);
+    return maxLen === 0 ? 1 : 1 - distance / maxLen;
+  }
 
   return (
     <Box sx={{ bgcolor: isSamgukjiFont() ? '#0e1755' : theme.background, minHeight: "100vh", color: isSamgukjiFont() ? '#ffffff' : theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
