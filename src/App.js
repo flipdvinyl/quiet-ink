@@ -482,21 +482,20 @@ export default function App() {
   };
 
   const VOICES = [
-    { name: '루시안 프로이드', id: 'hQqi26RFdZ59x3bGR2Bnoj', description: '는 고독과 친밀한 화가였어요. 조용하지만 단단한 목소리로 마음을 전했죠. 한때, 프랜시스 베이컨의 절친이었다지요.' },
-    { name: '귀찮은 고양이', id: 'ad67887f07639d2973f48a', description: '를 소개하는 건 정말 너무 귀찮네요.' },
-    { name: '책뚫남', id: 'a213ca3c004c21da52d35d', description: '이 읽어 주는 책은 멈출 수 없어요. 잠들기 전 옆에서 책 읽어 주었으면 하는 사람 콘테스트에서 우승했거든요.' },
-    { name: '제너레이션 MG', id: '4404f9613ff506ebd6daee', description: '는 부장님을 이해할 수 없어요. 부장님도 그녀를 이해할 수 없지요. 그러면 어때요? 젊고 쿨한걸요.' },
-    { name: '차분한 그녀', id: '26dbddbce9113c14a6822c', description: '는 글을 읽으며 꾸미지 않아요. 가끔은 읽던 곳을 놓치기도 하지만, 그러면 어때요. 친근한걸요.' },
-    { name: '미술관 도슨트', id: '0f7ccb849f108608620302', description: '는 예술과 당신 사이의 안내자예요. 자연과 예술, 시간과 사유를 연결하는 자리에 늘 함께 있어요.' },
-    { name: '박물관 사서', id: 'eb5e0f9308248300915305', description: '눈에 띄지 않게 조용히 책 사이를 오가며, 누군가의 하루에 맞는 문장을 골라줘요.' },
-    { name: '진지한 케일리', id: 'weKbNjMh2V5MuXziwHwjoT', description: '는 회사 스튜디오에서 우연히 목소리를 녹음 했어요. 연기엔 자신 있었다지만 누가 봐도 또박또박 읽고 있지요.' },
-    { name: '릭 루빈', id: 'nNkPFG9fioPzmsxGpawKbv', description: '은 화려한 테크닉보다 감각과 직관을 믿는 사람이에요. 명상으로 마음을 비우고, 음악의 본질만을 담아내는 전설적인 프로듀서죠.' },
-    { name: '이석원', id: '6ay4URFxK9bry6z7zMDBLP', description: '은 말보다 침묵에 가까운 사람이지요. 그의 시선엔 쓸쓸함과 따뜻함이 함께 있고, 목소리는 그의 노래처럼 차분하고 조용하지만 오래 남거든요.' },
-    { name: '출판사 『무제』 사장', id: 'k3nWGietavXL1CA7oksXZ9', description: '은 베일에 싸여 있어요. 배우라는 설도 있지만 낭설일 뿐이지요. 『쓸 만한 인간』이라는 말도 들어요.' },
-    { name: '송골매 기타리스트', id: '9BxbNLZ349CPuYpLUmBDYa', description: '가 누구인지 아는사람들 모여라~! 세상만사 모든일이 뜻대로야 되겠소만 어쩌다 마주친 그대처럼 우리 모두 다 사랑하리~' },
-    // 추가: 소년, 소녀
-    { name: '소년', id: '4MvvJLQnDUoBMojLQ8YhTW', description: '은 개울가 징검다리에서 소녀를 기다리고, 그녀가 건넌 흰 조약돌을 소중히 간직하는 조심스러운 아이예요.' },
-    { name: '소녀', id: '1pREPnx17ahNcRvUfdhR8', description: '는 ‘이 바보‘라며 웃으며 조약돌을 던지고, 수숫단 속에서 소년에게 몸을 기댄 채 조용히 따뜻함을 나누는 섬세한 아이예요.' },
+    { name: '루시안 프로이드', id: 'hQqi26RFdZ59x3bGR2Bnoj', description: `는 고독과 친밀한 화가였어요. 조용하지만 단단한 목소리로 마음을 전했죠. 한때, 프랜시스 베이컨의 절친이었다지요.` },
+    { name: '귀찮은 고양이', id: 'ad67887f07639d2973f48a', description: `를 소개하는 건 정말 너무 귀찮네요.` },
+    { name: '책뚫남', id: 'a213ca3c004c21da52d35d', description: `이 읽어 주는 책은 멈출 수 없어요. 잠들기 전 옆에서 책 읽어 주었으면 하는 사람 콘테스트에서 우승했거든요.` },
+    { name: '제너레이션 MG', id: '4404f9613ff506ebd6daee', description: `는 부장님을 이해할 수 없어요. 부장님도 그녀를 이해할 수 없지요. 그러면 어때요? 젊고 쿨한걸요.` },
+    { name: '차분한 그녀', id: '26dbddbce9113c14a6822c', description: `는 글을 읽으며 꾸미지 않아요. 가끔은 읽던 곳을 놓치기도 하지만, 그러면 어때요. 친근한걸요.` },
+    { name: '미술관 도슨트', id: '0f7ccb849f108608620302', description: `는 예술과 당신 사이의 안내자예요. 자연과 예술, 시간과 사유를 연결하는 자리에 늘 함께 있어요.` },
+    { name: '박물관 사서', id: 'eb5e0f9308248300915305', description: `눈에 띄지 않게 조용히 책 사이를 오가며, 누군가의 하루에 맞는 문장을 골라줘요.` },
+    { name: '진지한 케일리', id: 'weKbNjMh2V5MuXziwHwjoT', description: `는 회사 스튜디오에서 우연히 목소리를 녹음 했어요. 연기엔 자신 있었다지만 누가 봐도 또박또박 읽고 있지요.` },
+    { name: '릭 루빈', id: 'nNkPFG9fioPzmsxGpawKbv', description: `은 화려한 테크닉보다 감각과 직관을 믿는 사람이에요. 명상으로 마음을 비우고, 음악의 본질만을 담아내는 전설적인 프로듀서죠.` },
+    { name: '소년', id: '4MvvJLQnDUoBMojLQ8YhTW', description: `은 개울가 징검다리에서 소녀를 기다리고, 그녀가 건넌 흰 조약돌을 소중히 간직하는 조심스러운 아이예요.` },
+    { name: '소녀', id: '1pREPnx17ahNcRvUfdhR8', description: `는 ‘이 바보'라며 웃으며 조약돌을 던지고, 수숫단 속에서 소년에게 몸을 기댄 채 조용히 따뜻함을 나누는 섬세한 아이예요.` },
+    { name: '이석원', id: '6ay4URFxK9bry6z7zMDBLP', description: `은 말보다 침묵에 가까운 사람이지요. 그의 시선엔 쓸쓸함과 따뜻함이 함께 있고, 목소리는 그의 노래처럼 차분하고 조용하지만 오래 남거든요.` },
+    { name: '출판사 『무제』 사장', id: 'k3nWGietavXL1CA7oksXZ9', description: `은 베일에 싸여 있어요. 배우라는 설도 있지만 낭설일 뿐이지요. 『쓸 만한 인간』이라는 말도 들어요.` },
+    { name: '송골매 기타리스트', id: '9BxbNLZ349CPuYpLUmBDYa', description: `가 누구인지 아는사람들 모여라~! 세상만사 모든일이 뜻대로야 되겠소만 어쩌다 마주친 그대처럼 우리 모두 다 사랑하리~` },
   ];
   // selectedVoice는 프리셋의 voice(name)와 동기화
   const [selectedVoice, setSelectedVoice] = useState(() => {
