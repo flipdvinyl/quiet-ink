@@ -3138,7 +3138,7 @@ export default function App() {
                       style={{
                         position: 'absolute',
                         left: 0,
-                        top: `calc(-${lineHeight * 0.6}em)`,
+                        top: `calc(-${lineHeight * 0.65}em)`,
                         fontSize: `${voiceNameFontSize}px`,
                         color: isSamgukjiFont() ? '#ffffff99' : '#888',
                         fontWeight: 400,
