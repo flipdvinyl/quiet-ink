@@ -645,11 +645,18 @@ export default function App() {
       }
       while (remainingText.length > 0) {
         if (remainingText.length <= maxLength) {
+          // ::텍스트:: 패턴에서 22자의 영문/숫자면 voiceId로 인식
+          let voiceId = undefined;
+          const voiceIdMatch = remainingText.match(/::([A-Za-z0-9]{22})::/);
+          if (voiceIdMatch) {
+            voiceId = voiceIdMatch[1];
+          }
           takes.push({
             text: remainingText,
             displayText: convertTextForDisplay(remainingText),
             name: `Take_${takeNumber}`,
-            detectedLanguage: detectedLanguage
+            detectedLanguage: detectedLanguage,
+            voiceId
           });
           break;
         }
@@ -679,11 +686,17 @@ export default function App() {
           cutIndex = lastSpace;
         }
         const takeText = remainingText.slice(0, cutIndex).trim();
+        let voiceId = undefined;
+        const voiceIdMatch = takeText.match(/::([A-Za-z0-9]{22})::/);
+        if (voiceIdMatch) {
+          voiceId = voiceIdMatch[1];
+        }
         takes.push({
           text: takeText,
           displayText: convertTextForDisplay(takeText),
           name: `Take_${takeNumber}`,
-          detectedLanguage: detectedLanguage
+          detectedLanguage: detectedLanguage,
+          voiceId
         });
         remainingText = remainingText.slice(cutIndex).trim();
         takeNumber++;
@@ -937,7 +950,8 @@ export default function App() {
 
   // TTS 변환 함수 - 오디오 URL만 생성
   const convertToSpeech = async (take, voiceId, signal) => {
-    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
+    // 우선순위: 파라미터 voiceId > take.voiceId > selectedVoice > 기본
+    const useVoiceId = voiceId || take.voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     try {
       console.log(`Converting Take: ${take.name}`);
       // API 호출용 텍스트로 변환 (AAA::BBB::CCC 형식 처리)
