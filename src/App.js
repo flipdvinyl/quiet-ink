@@ -1006,7 +1006,7 @@ export default function App() {
 
   // 다음 Take 미리 생성
   const prepareNextTake = async (nextIndex, voiceId, signal) => {
-    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
+    // const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     if (nextIndex >= takesRef.current.length || audioBufferRef.current[nextIndex]) {
       console.log(`Skip preparing take ${nextIndex}: ${nextIndex >= takesRef.current.length ? 'end of takes' : 'already in buffer'}`);
       return;
@@ -1015,8 +1015,7 @@ export default function App() {
       console.log(`Preparing take ${nextIndex}`);
       setFadeIn(true);
       setGeneratingTake(nextIndex);
-      const audioUrl = await convertToSpeech(takesRef.current[nextIndex], useVoiceId, signal);
-      console.log(`Successfully prepared take ${nextIndex}, URL: ${audioUrl}`);
+      const audioUrl = await convertToSpeech(takesRef.current[nextIndex], null, signal);
       audioBufferRef.current[nextIndex] = audioUrl;
       // 생성 완료 시 애니메이션 중지 (현재 생성중인 테이크가 지금 끝난 테이크와 같다면)
       setGeneratingTake(currentGeneratingTake => {
@@ -1392,14 +1391,14 @@ export default function App() {
 
     setLoading(true);
     setIsPlaying(true);
-    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
+    // const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     try {
       setFadeIn(true);
       setGeneratingTake(startIndex);
-      const url = await convertToSpeech(takesRef.current[startIndex], useVoiceId, signal);
+      const url = await convertToSpeech(takesRef.current[startIndex], null, signal);
       audioBufferRef.current = { [startIndex]: url };
       if (startIndex < takesRef.current.length - 1) {
-        prepareNextTake(startIndex + 1, useVoiceId, signal);
+        prepareNextTake(startIndex + 1, null, signal);
       }
       playTake(startIndex);
     } catch (e) {
