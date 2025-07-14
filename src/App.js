@@ -3109,13 +3109,14 @@ export default function App() {
                 if (v) customVoiceName = v.name;
               }
               const fontSize = preset.fontSize[isTabletPC ? 'pc' : 'mobile'];
-              const voiceNameFontSize = Math.round(fontSize * 0.65);
+              const voiceNameFontSize = Math.round(fontSize * 0.6);
+              const lineHeight = preset.lineHeight[isTabletPC ? 'pc' : 'mobile'] ?? 1.7;
               return (
                 <Box
                   key={take.name}
                   className={index === currentTake ? 'current-take' : ''}
                   sx={{
-                    mb: `${preset.lineHeight[isTabletPC ? 'pc' : 'mobile']}rem`,
+                    mb: `${lineHeight}rem`,
                     pb: 0,
                     cursor: 'pointer',
                     borderRadius: '8px',
@@ -3137,7 +3138,7 @@ export default function App() {
                       style={{
                         position: 'absolute',
                         left: 0,
-                        top: `calc(-${voiceNameFontSize * 1.5}px)`,
+                        top: `calc(-${lineHeight * 0.6}em)`,
                         fontSize: `${voiceNameFontSize}px`,
                         color: isSamgukjiFont() ? '#ffffff99' : '#888',
                         fontWeight: 400,
@@ -3148,7 +3149,7 @@ export default function App() {
                         background: 'transparent',
                       }}
                     >
-                      {customVoiceName} /
+                      {customVoiceName}
                     </span>
                   )}
                   {generatingTake === index ? (
