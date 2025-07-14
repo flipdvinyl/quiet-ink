@@ -3101,47 +3101,78 @@ export default function App() {
         {/* takes.length > 0일 때 테이크 표시 */}
         {takes.length > 0 && (
           <Box sx={{ mt: 0 }} ref={takesContainerRef}>
-            {takes.map((take, index) => (
-              <Box
-                key={take.name}
-                className={index === currentTake ? 'current-take' : ''}
-                sx={{
-                  mb: `${preset.lineHeight[isTabletPC ? 'pc' : 'mobile']}rem`,
-                  pb: 0,
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  transition: 'background-color 0.2s ease-in-out',
-                  '&:active': {
-                    backgroundColor: 'rgba(139, 69, 19, 0.1)',
-                  },
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-                onMouseDown={() => {
-                  hapticFeedback.light();
-                  handlePlayFromTake(index);
-                }}
-              >
-                {generatingTake === index ? (
-                  <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
+            {takes.map((take, index) => {
+              // 커스텀 보이스 이름 표시용
+              let customVoiceName = undefined;
+              if (take.voiceId) {
+                const v = VOICES.find(v => v.id === take.voiceId);
+                if (v) customVoiceName = v.name;
+              }
+              const fontSize = preset.fontSize[isTabletPC ? 'pc' : 'mobile'];
+              const voiceNameFontSize = Math.round(fontSize * 0.65);
+              return (
+                <Box
+                  key={take.name}
+                  className={index === currentTake ? 'current-take' : ''}
+                  sx={{
+                    mb: `${preset.lineHeight[isTabletPC ? 'pc' : 'mobile']}rem`,
+                    pb: 0,
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s ease-in-out',
+                    '&:active': {
+                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                    },
+                    WebkitTapHighlightColor: 'transparent',
+                    position: 'relative',
+                  }}
+                  onMouseDown={() => {
+                    hapticFeedback.light();
+                    handlePlayFromTake(index);
+                  }}
+                >
+                  {/* 커스텀 보이스 이름 오버레이 */}
+                  {customVoiceName && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: `calc(-${voiceNameFontSize * 1.5}px)`,
+                        fontSize: `${voiceNameFontSize}px`,
+                        color: isSamgukjiFont() ? '#ffffff99' : '#888',
+                        fontWeight: 400,
+                        zIndex: 2,
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                        lineHeight: 1,
+                        background: 'transparent',
+                      }}
+                    >
+                      {customVoiceName} /
+                    </span>
+                  )}
+                  {generatingTake === index ? (
+                    <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
+                      <HighlightedText
+                        text={take}
+                        currentIndex={-1}
+                        fontSize={fontSize}
+                        isCurrentTake={index === currentTake}
+                        takeIndex={index}
+                      />
+                    </Box>
+                  ) : (
                     <HighlightedText
                       text={take}
-                      currentIndex={-1}
-                      fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
+                      currentIndex={index === currentTake && isPlaying && isAudioPlaying ? currentWordIndex : -1}
+                      fontSize={fontSize}
                       isCurrentTake={index === currentTake}
                       takeIndex={index}
                     />
-                  </Box>
-                ) : (
-                  <HighlightedText
-                    text={take}
-                    currentIndex={index === currentTake && isPlaying && isAudioPlaying ? currentWordIndex : -1}
-                    fontSize={preset.fontSize[isTabletPC ? 'pc' : 'mobile']}
-                    isCurrentTake={index === currentTake}
-                    takeIndex={index}
-                  />
-                )}
-              </Box>
-            ))}
+                  )}
+                </Box>
+              );
+            })}
             {/* 푸터 영역 */}
             <Box sx={{ 
               mt: '100px', 
