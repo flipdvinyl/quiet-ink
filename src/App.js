@@ -645,15 +645,17 @@ export default function App() {
       }
       while (remainingText.length > 0) {
         if (remainingText.length <= maxLength) {
-          // ::텍스트:: 패턴에서 22자의 영문/숫자면 voiceId로 인식
+          // ::텍스트:: 패턴에서 22자의 영문/숫자면 voiceId로 인식하고 텍스트에서 제거
           let voiceId = undefined;
+          let cleanText = remainingText;
           const voiceIdMatch = remainingText.match(/::([A-Za-z0-9]{22})::/);
           if (voiceIdMatch) {
             voiceId = voiceIdMatch[1];
+            cleanText = remainingText.replace(/::[A-Za-z0-9]{22}::/, '').trim();
           }
           takes.push({
-            text: remainingText,
-            displayText: convertTextForDisplay(remainingText),
+            text: cleanText,
+            displayText: convertTextForDisplay(cleanText),
             name: `Take_${takeNumber}`,
             detectedLanguage: detectedLanguage,
             voiceId
@@ -687,13 +689,15 @@ export default function App() {
         }
         const takeText = remainingText.slice(0, cutIndex).trim();
         let voiceId = undefined;
+        let cleanText = takeText;
         const voiceIdMatch = takeText.match(/::([A-Za-z0-9]{22})::/);
         if (voiceIdMatch) {
           voiceId = voiceIdMatch[1];
+          cleanText = takeText.replace(/::[A-Za-z0-9]{22}::/, '').trim();
         }
         takes.push({
-          text: takeText,
-          displayText: convertTextForDisplay(takeText),
+          text: cleanText,
+          displayText: convertTextForDisplay(cleanText),
           name: `Take_${takeNumber}`,
           detectedLanguage: detectedLanguage,
           voiceId
@@ -762,11 +766,12 @@ export default function App() {
 
   // 화면 표시용 텍스트 변환 (AAA 그대로 유지)
   const convertTextForDisplay = (text) => {
-    const matches = parseSpecialFormat(text);
+    // ::22자영문숫자:: 패턴 제거
+    let result = text.replace(/::[A-Za-z0-9]{22}::/, '');
+    // 기존 변환 로직 유지
+    const matches = parseSpecialFormat(result);
     console.log('화면 변환 - 원본 텍스트:', text);
     console.log('화면 변환 - 찾은 매치:', matches);
-    
-    let result = text;
     
     // 뒤에서부터 변환하여 인덱스 변화를 방지
     for (let i = matches.length - 1; i >= 0; i--) {
