@@ -2234,33 +2234,47 @@ export default function App() {
     await handleCustomVoiceIdPaste(); // 클립보드에서 새 Voice ID 가져오기
   };
 
-  // takes에서 사용된 22자리 voiceID들을 찾아서 임시 보이스로 추가
-  useEffect(() => {
-    const newTempVoices = [];
-    takes.forEach(take => {
-      if (take.voiceId && take.voiceId.length === 22 && /^[a-zA-Z0-9]+$/.test(take.voiceId)) {
-        // 이미 추가된 voiceID가 아닌 경우만 추가
-        if (!newTempVoices.find(v => v.id === take.voiceId) && 
-            !VOICES.find(v => v.id === take.voiceId) && 
-            !tempVoices.find(v => v.id === take.voiceId)) {
-          newTempVoices.push({
-            id: take.voiceId,
-            name: take.voiceId,
-            description: "는 아르바이트에요. 잠시 글을 읽어줘요",
-            isTemp: true
-          });
-        }
-      }
-    });
-    
-    if (newTempVoices.length > 0) {
-      setTempVoices(prev => [...prev, ...newTempVoices]);
+  // 앱 실행 중 등록된 임시 보이스들을 유지하기 위한 상태
+  const [registeredTempVoices, setRegisteredTempVoices] = useState(() => {
+    try {
+      const saved = localStorage.getItem('audiobook-temp-voices');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  }, [takes]);
+  });
+
+  // takes에서 사용된 22자리 voiceID들을 찾아서 임시 보이스로 추가
+  const tempVoices = [];
+  takes.forEach(take => {
+    if (take.voiceId && take.voiceId.length === 22 && /^[a-zA-Z0-9]+$/.test(take.voiceId)) {
+      // 이미 추가된 voiceID가 아닌 경우만 추가
+      if (!tempVoices.find(v => v.id === take.voiceId) && 
+          !VOICES.find(v => v.id === take.voiceId) && 
+          !registeredTempVoices.find(v => v.id === take.voiceId)) {
+        const newTempVoice = {
+          id: take.voiceId,
+          name: take.voiceId,
+          description: "는 아르바이트에요. 잠시 글을 읽어줘요",
+          isTemp: true
+        };
+        tempVoices.push(newTempVoice);
+        // 새로 발견된 임시 보이스를 등록된 목록에 추가
+        setRegisteredTempVoices(prev => {
+          const updated = [...prev, newTempVoice];
+          try {
+            localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    }
+  });
 
   // VOICES 배열 수정
   const ALL_VOICES = [
     ...VOICES,
+    ...registeredTempVoices,
     ...tempVoices,
     {
       id: 'custom',
@@ -2676,7 +2690,6 @@ export default function App() {
   }
 
   const [customVoiceEditIndex, setCustomVoiceEditIndex] = useState(null);
-  const [tempVoices, setTempVoices] = useState([]);
 
   // 기존 handleVoiceSelect 백업
   const _handleVoiceSelect = handleVoiceSelectGlobal;
