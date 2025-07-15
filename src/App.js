@@ -3109,20 +3109,20 @@ export default function App() {
             isTemp: true
           };
           
-          setRegisteredTempVoices(prev => {
-            const updated = [...prev, newTempVoice];
-            try {
-              localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
-            } catch {}
-            return updated;
-          });
+          // 상태 업데이트를 동기적으로 처리
+          const updatedTempVoices = [...registeredTempVoices, newTempVoice];
+          setRegisteredTempVoices(updatedTempVoices);
+          try {
+            localStorage.setItem('audiobook-temp-voices', JSON.stringify(updatedTempVoices));
+          } catch {}
           
           // 임시 목소리 추가 후 해당 voice 객체 업데이트
-          voice = {
+          const updatedVoice = {
             ...voice,
             id: customVoiceId,
             name: customVoiceId
           };
+          voice = updatedVoice;
         } else {
           // 이미 존재하는 경우 해당 voice 객체 찾기
           const existingVoice = registeredTempVoices.find(v => v.id === customVoiceId) ||
@@ -3132,6 +3132,11 @@ export default function App() {
           }
         }
       }
+      
+      // voice 객체가 업데이트되었는지 확인하고 디버깅
+      console.log('Final voice object:', voice);
+      console.log('Voice ID:', voice.id);
+      console.log('Voice name:', voice.name);
       
       const newVoiceName = voice.name;
       const targetTake = takes[customVoiceEditIndex];
