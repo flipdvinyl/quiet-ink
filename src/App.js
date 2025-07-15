@@ -2436,10 +2436,32 @@ export default function App() {
         description: `${customVoiceId} / [↻] 목소리 바꾸기`,
         isCustom: true
       });
+      
       // localStorage에 저장 (이미 useEffect에서 처리되지만 확실히 하기 위해)
       try {
         localStorage.setItem('audiobook-custom-voice-id', customVoiceId);
       } catch {}
+      
+      // 유효한 voiceID를 임시 목소리로 추가 (중복 체크)
+      const isDuplicate = registeredTempVoices.find(v => v.id === customVoiceId) ||
+                         VOICES.find(v => v.id === customVoiceId);
+      
+      if (!isDuplicate) {
+        const newTempVoice = {
+          id: customVoiceId,
+          name: customVoiceId,
+          description: "는 아르바이트에요. 잠시 글을 읽어줘요.",
+          isTemp: true
+        };
+        
+        setRegisteredTempVoices(prev => {
+          const updated = [...prev, newTempVoice];
+          try {
+            localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
     } catch (err) {
       console.error('Failed to validate voice ID:', err);
       alert('잘못된 Voice ID 입력');
