@@ -717,19 +717,26 @@ export default function App() {
             const voiceNameMatch = remainingText.match(/^::([^:]+)::/);
             if (voiceNameMatch) {
               const voiceName = voiceNameMatch[1];
-              let foundVoice = VOICES.find(v => v.name === voiceName);
-              if (!foundVoice) {
-                // 유사도 0.75 이상인 보이스 찾기
-                let best = {sim: 0, v: null};
-                for (const v of VOICES) {
-                  const sim = similarity(voiceName, v.name);
-                  if (sim > best.sim) best = {sim, v};
-                }
-                if (best.sim >= 0.75) foundVoice = best.v;
-              }
-              if (foundVoice) {
-                voiceId = foundVoice.id;
+              
+              // '내가 좋아하는 목소리' 특별 처리
+              if (voiceName === '내가 좋아하는 목소리') {
+                voiceId = customVoiceId;
                 cleanText = remainingText.replace(/^::[^:]+::/, '').trim();
+              } else {
+                let foundVoice = VOICES.find(v => v.name === voiceName);
+                if (!foundVoice) {
+                  // 유사도 0.75 이상인 보이스 찾기
+                  let best = {sim: 0, v: null};
+                  for (const v of VOICES) {
+                    const sim = similarity(voiceName, v.name);
+                    if (sim > best.sim) best = {sim, v};
+                  }
+                  if (best.sim >= 0.75) foundVoice = best.v;
+                }
+                if (foundVoice) {
+                  voiceId = foundVoice.id;
+                  cleanText = remainingText.replace(/^::[^:]+::/, '').trim();
+                }
               }
             }
           }
@@ -780,19 +787,26 @@ export default function App() {
           const voiceNameMatch = takeText.match(/^::([^:]+)::/);
           if (voiceNameMatch) {
             const voiceName = voiceNameMatch[1];
-            let foundVoice = VOICES.find(v => v.name === voiceName);
-            if (!foundVoice) {
-              // 유사도 0.75 이상인 보이스 찾기
-              let best = {sim: 0, v: null};
-              for (const v of VOICES) {
-                const sim = similarity(voiceName, v.name);
-                if (sim > best.sim) best = {sim, v};
-              }
-              if (best.sim >= 0.75) foundVoice = best.v;
-            }
-            if (foundVoice) {
-              voiceId = foundVoice.id;
+            
+            // '내가 좋아하는 목소리' 특별 처리
+            if (voiceName === '내가 좋아하는 목소리') {
+              voiceId = customVoiceId;
               cleanText = takeText.replace(/^::[^:]+::/, '').trim();
+            } else {
+              let foundVoice = VOICES.find(v => v.name === voiceName);
+              if (!foundVoice) {
+                // 유사도 0.75 이상인 보이스 찾기
+                let best = {sim: 0, v: null};
+                for (const v of VOICES) {
+                  const sim = similarity(voiceName, v.name);
+                  if (sim > best.sim) best = {sim, v};
+                }
+                if (best.sim >= 0.75) foundVoice = best.v;
+              }
+              if (foundVoice) {
+                voiceId = foundVoice.id;
+                cleanText = takeText.replace(/^::[^:]+::/, '').trim();
+              }
             }
           }
         }
@@ -3110,8 +3124,8 @@ export default function App() {
         const newTakes = [...takes];
         newTakes[customVoiceEditIndex] = {
           ...targetTake,
-          text: `::${customVoiceId}::` + targetTake.text,
-          displayText: convertTextForDisplay(`::${customVoiceId}::` + targetTake.text),
+          text: `::내가 좋아하는 목소리::` + targetTake.text,
+          displayText: convertTextForDisplay(`::내가 좋아하는 목소리::` + targetTake.text),
           voiceId: customVoiceId
         };
         
