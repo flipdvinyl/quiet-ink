@@ -2234,9 +2234,26 @@ export default function App() {
     await handleCustomVoiceIdPaste(); // 클립보드에서 새 Voice ID 가져오기
   };
 
+  // takes에서 사용된 22자리 voiceID들을 찾아서 임시 보이스로 추가
+  const tempVoices = [];
+  takes.forEach(take => {
+    if (take.voiceId && take.voiceId.length === 22 && /^[a-zA-Z0-9]+$/.test(take.voiceId)) {
+      // 이미 추가된 voiceID가 아닌 경우만 추가
+      if (!tempVoices.find(v => v.id === take.voiceId) && !VOICES.find(v => v.id === take.voiceId)) {
+        tempVoices.push({
+          id: take.voiceId,
+          name: take.voiceId,
+          description: "는 아르바이트에요. 잠시 글을 읽어줘요",
+          isTemp: true
+        });
+      }
+    }
+  });
+
   // VOICES 배열 수정
   const ALL_VOICES = [
     ...VOICES,
+    ...tempVoices,
     {
       id: 'custom',
       name: '내가 좋아하는 목소리',
