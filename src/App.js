@@ -3178,7 +3178,14 @@ export default function App() {
               let customVoiceName = undefined;
               if (take.voiceId) {
                 const v = VOICES.find(v => v.id === take.voiceId);
-                if (v) customVoiceName = v.name;
+                if (v) {
+                  customVoiceName = v.name;
+                } else {
+                  // 22자리 voiceID인 경우 임시 voice로 표시
+                  if (take.voiceId.length === 22 && /^[a-zA-Z0-9]+$/.test(take.voiceId)) {
+                    customVoiceName = take.voiceId;
+                  }
+                }
               }
               const fontSize = preset.fontSize[isTabletPC ? 'pc' : 'mobile'];
               const voiceNameFontSize = Math.round(fontSize * 0.6);
