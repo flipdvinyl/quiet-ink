@@ -1299,7 +1299,7 @@ export default function App() {
         console.log('TTS generation aborted.');
         return; // 그냥 종료. 새로운 요청이 처리될 것임.
       }
-      alert("음성 변환에 실패했습니다.");
+      // 음성 변환 실패 시 상태 정리만 수행
       setCustomVoiceId('');
       // stopPlaying() 대신 아래만 실행
       if (currentAudio.current) {
@@ -1310,7 +1310,9 @@ export default function App() {
         currentAudio.current.onplay = null;
         currentAudio.current.ontimeupdate = null;
       }
-      setVoiceMenuOpen(true);
+      
+      // alert만 표시하고 보이스 선택 팝업은 열지 않음
+      alert("음성 변환에 실패했습니다.");
     }
   };
 
@@ -1653,7 +1655,7 @@ export default function App() {
         return;
       }
       console.error("재생 시작 실패:", e);
-      alert("음성 변환에 실패했습니다.");
+      // 음성 변환 실패 시 상태 정리만 수행
       setCustomVoiceId('');
       // stopPlaying() 대신 아래만 실행
       if (currentAudio.current) {
@@ -1664,7 +1666,9 @@ export default function App() {
         currentAudio.current.onplay = null;
         currentAudio.current.ontimeupdate = null;
       }
-      setVoiceMenuOpen(true);
+      
+      // alert만 표시하고 보이스 선택 팝업은 열지 않음
+      alert("음성 변환에 실패했습니다.");
     }
   };
 
@@ -3609,8 +3613,8 @@ export default function App() {
                         userSelect: 'none',
                         lineHeight: 1,
                         background: 'transparent',
-                        paddingTop: '15px',
-                        paddingBottom: '15px',
+                        paddingTop: '10px',
+                        paddingBottom: '10px',
                         paddingLeft: '10px',
                         paddingRight: '10px',
                         borderRadius: '4px',
