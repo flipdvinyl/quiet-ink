@@ -1457,7 +1457,21 @@ export default function App() {
         URL.revokeObjectURL(audioBufferRef.current[takeIndex]);
         delete audioBufferRef.current[takeIndex];
         const { signal } = ttsAbortControllerRef.current || { signal: undefined };
-        setTimeout(() => playTake(takeIndex + 1, signal), 1000);
+        
+        // 다음 테이크 재생 시도 (페이지가 숨겨져 있어도 재생)
+        setTimeout(() => {
+          // 페이지가 숨겨져 있거나 AudioContext가 일시정지 상태라도 재생 시도
+          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume().then(() => {
+              playTake(takeIndex + 1, signal);
+            }).catch(err => {
+              console.warn('AudioContext 재개 실패, 재생 시도:', err);
+              playTake(takeIndex + 1, signal);
+            });
+          } else {
+            playTake(takeIndex + 1, signal);
+          }
+        }, 1000);
       };
       setCurrentAudioState(audio);
       audio.src = audioUrl;
@@ -2666,10 +2680,29 @@ export default function App() {
     const handlePageShow = () => {
       console.log('페이지 보임 이벤트 발생');
       setIsPageVisible(true);
-      if (wasPlayingBeforeHide && currentAudio.current && isPaused) {
+      
+      // 페이지가 다시 보일 때 재생 상태 복구
+      if (wasPlayingBeforeHide && currentAudio.current) {
         setTimeout(() => {
+          // AudioContext가 일시정지 상태라면 재개
+          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume().catch(err => {
+              console.warn('AudioContext 재개 실패:', err);
+            });
+          }
+          
           currentAudio.current.play().catch(err => {
             console.error('페이지 복귀 후 재생 재개 실패:', err);
+            // 재생 실패 시 AudioContext 재개 시도
+            if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+              audioContextRef.current.resume().then(() => {
+                currentAudio.current.play().catch(err => {
+                  console.error('재시도 후에도 재생 재개 실패:', err);
+                });
+              }).catch(err => {
+                console.error('AudioContext 재개 실패:', err);
+              });
+            }
           });
           setIsPaused(false);
           setWasPlayingBeforeHide(false);
@@ -3623,10 +3656,7 @@ export default function App() {
                 <span style={isPlaying && currentAudio.current && generatingTake !== currentTake ? { marginLeft: 6 } : {}}>{generatingTake + 1}</span>
               </Fade>
             )}
-            {/* 화면 활성화 상태 표시 */}
-            {isScreenWakeLockActive && (
-              <span style={{ marginLeft: 6, opacity: 0.7 }}>🔒</span>
-            )}
+
           </span>
         )}
       </Box>
