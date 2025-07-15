@@ -3577,7 +3577,7 @@ export default function App() {
                   key={take.name}
                   className={index === currentTake ? 'current-take' : ''}
                   sx={{
-                    mb: `${lineHeight}rem`,
+                    mb: `${lineHeight * 1.1}rem`,
                     pb: 0,
                     cursor: 'pointer',
                     borderRadius: '8px',
