@@ -3081,8 +3081,10 @@ export default function App() {
         return;
       }
     }
-    // 기존 글로벌 보이스 변경 로직
-    _handleVoiceSelect(voice);
+    // '+ 다른 사람이 읽기'에서 선택한 경우가 아닐 때만 글로벌 보이스 변경
+    if (customVoiceEditIndex === null) {
+      _handleVoiceSelect(voice);
+    }
   };
 
   // '+ 다른 사람이 읽기' 버튼을 위한 새로운 핸들러
