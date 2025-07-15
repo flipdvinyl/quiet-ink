@@ -189,6 +189,15 @@ export default function App() {
   const ttsAbortControllerRef = useRef(null);
   const isUnloadingRef = useRef(false);
   
+  // 모바일 백그라운드 오디오 관리를 위한 상태
+  const [isPageVisible, setIsPageVisible] = useState(true);
+  const [wasPlayingBeforeHide, setWasPlayingBeforeHide] = useState(false);
+  const audioContextRef = useRef(null);
+  
+  // 화면 활성화 관리를 위한 상태
+  const [isScreenWakeLockActive, setIsScreenWakeLockActive] = useState(false);
+  const wakeLockRef = useRef(null);
+  
   // 언어 설정
   const [currentLanguage, setCurrentLanguage] = useState(() => {
     try {
@@ -205,6 +214,42 @@ export default function App() {
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
   // 테이크 화면 진입 시점 추적 (음악캠프용)
   const takeScreenEnterTimeRef = useRef(null);
+  
+  // 화면 활성화 관리 함수들
+  const requestWakeLock = async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+        setIsScreenWakeLockActive(true);
+        console.log('화면 활성화 요청 성공');
+        
+        // wakeLock 해제 이벤트 리스너
+        wakeLockRef.current.addEventListener('release', () => {
+          console.log('화면 활성화 해제됨');
+          setIsScreenWakeLockActive(false);
+          wakeLockRef.current = null;
+        });
+      } catch (err) {
+        console.warn('화면 활성화 요청 실패:', err);
+        setIsScreenWakeLockActive(false);
+      }
+    } else {
+      console.log('Wake Lock API를 지원하지 않는 브라우저');
+    }
+  };
+  
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+        setIsScreenWakeLockActive(false);
+        console.log('화면 활성화 해제됨');
+      } catch (err) {
+        console.warn('화면 활성화 해제 실패:', err);
+      }
+    }
+  };
   // 프리셋 상태 관리
   const [preset, setPreset] = useState(() => {
     try {
@@ -1330,6 +1375,16 @@ export default function App() {
       if (!audio) {
         audio = new Audio();
         currentAudio.current = audio;
+        
+        // 모바일 백그라운드 오디오를 위한 설정
+        audio.preload = 'auto';
+        audio.crossOrigin = 'anonymous';
+        
+        // iOS Safari를 위한 추가 설정
+        if (isSafari()) {
+          audio.setAttribute('webkit-playsinline', 'true');
+          audio.setAttribute('playsinline', 'true');
+        }
       } else {
         audio.pause();
         audio.currentTime = 0;
@@ -1340,6 +1395,17 @@ export default function App() {
         // src를 바꾸기 전에 srcObject도 null로
         audio.srcObject = null;
       }
+      
+      // 오디오 컨텍스트 생성 (백그라운드 오디오 지원)
+      if (!audioContextRef.current && typeof AudioContext !== 'undefined') {
+        try {
+          audioContextRef.current = new AudioContext();
+          console.log('AudioContext 생성됨');
+        } catch (e) {
+          console.warn('AudioContext 생성 실패:', e);
+        }
+      }
+      
       audio.onerror = (e) => {
         console.error(`Audio error for take ${takeIndex}:`, e);
       };
@@ -1365,6 +1431,16 @@ export default function App() {
         setGeneratingTake(currentGenerating =>
           currentGenerating === takeIndex ? null : currentGenerating
         );
+        
+        // AudioContext가 일시정지 상태라면 재개
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().catch(err => {
+            console.warn('AudioContext 재개 실패:', err);
+          });
+        }
+        
+        // 재생 시작 시 화면 활성화 요청
+        requestWakeLock();
         
         setTimeout(() => {
           handleScrollCurrentTake();
@@ -1397,6 +1473,16 @@ export default function App() {
           })
           .catch(error => {
             console.error(`Error playing take ${takeIndex}:`, error);
+            // 재생 실패 시 AudioContext 재개 시도
+            if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+              audioContextRef.current.resume().then(() => {
+                audio.play().catch(err => {
+                  console.error('재시도 후에도 재생 실패:', err);
+                });
+              }).catch(err => {
+                console.error('AudioContext 재개 실패:', err);
+              });
+            }
           });
       }
     } catch (e) {
@@ -1421,6 +1507,18 @@ export default function App() {
       currentAudio.current.onplay = null;
       currentAudio.current.ontimeupdate = null;
     }
+    
+    // AudioContext 정리
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(err => {
+        console.warn('AudioContext 종료 실패:', err);
+      });
+      audioContextRef.current = null;
+    }
+    
+    // 화면 활성화 해제
+    releaseWakeLock();
+    
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentTake(0);
@@ -1428,6 +1526,7 @@ export default function App() {
     setIsAudioPlaying(false);
     setLoading(false);
     setGeneratingTake(null);
+    setWasPlayingBeforeHide(false); // 백그라운드 재생 상태도 초기화
     Object.values(audioBufferRef.current).forEach(url => {
       console.log(`Cleaning up URL: ${url}`);
       URL.revokeObjectURL(url);
@@ -2060,13 +2159,26 @@ export default function App() {
     };
   }, []);
 
-  // 배경음악 재생/정지 함수
+        // 배경음악 재생/정지 함수
   const playBgMusic = () => {
     if (bgMusic) {
       bgMusic.currentTime = 22; // 22초부터 시작
       bgMusic.volume = 0; // 처음에는 볼륨 0
+      
+      // 모바일 백그라운드 오디오를 위한 설정
+      bgMusic.preload = 'auto';
+      bgMusic.crossOrigin = 'anonymous';
+      
+      // iOS Safari를 위한 추가 설정
+      if (isSafari()) {
+        bgMusic.setAttribute('webkit-playsinline', 'true');
+        bgMusic.setAttribute('playsinline', 'true');
+      }
+      
       bgMusic.play().then(() => {
         setIsBgMusicPlaying(true);
+        // 배경음악 재생 시에도 화면 활성화 요청
+        requestWakeLock();
         // 3초 동안 페이드 인
         let volume = 0;
         const fadeInInterval = setInterval(() => {
@@ -2079,6 +2191,16 @@ export default function App() {
         }, 100);
       }).catch(err => {
         console.error('배경음악 재생 실패:', err);
+        // 재생 실패 시 AudioContext 재개 시도
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().then(() => {
+            bgMusic.play().catch(err => {
+              console.error('재시도 후에도 배경음악 재생 실패:', err);
+            });
+          }).catch(err => {
+            console.error('AudioContext 재개 실패:', err);
+          });
+        }
       });
     }
   };
@@ -2088,6 +2210,10 @@ export default function App() {
       bgMusic.pause();
       bgMusic.currentTime = 0;
       setIsBgMusicPlaying(false);
+      // 배경음악이 멈추고 메인 오디오도 재생 중이 아니면 화면 활성화 해제
+      if (!isPlaying || isPaused) {
+        releaseWakeLock();
+      }
     }
   };
 
@@ -2100,8 +2226,25 @@ export default function App() {
 
   const resumeBgMusic = () => {
     if (bgMusic && !isBgMusicPlaying && currentMaterial === 'musiccamp') {
+      // AudioContext가 일시정지 상태라면 재개
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(err => {
+          console.warn('AudioContext 재개 실패:', err);
+        });
+      }
+      
       bgMusic.play().catch(err => {
         console.error('배경음악 재개 실패:', err);
+        // 재생 실패 시 AudioContext 재개 시도
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().then(() => {
+            bgMusic.play().catch(err => {
+              console.error('재시도 후에도 배경음악 재개 실패:', err);
+            });
+          }).catch(err => {
+            console.error('AudioContext 재개 실패:', err);
+          });
+        }
       });
       setIsBgMusicPlaying(true);
     }
@@ -2482,15 +2625,84 @@ export default function App() {
     }, 1000);
   };
 
+  // 페이지 가시성 변경 이벤트 처리 (모바일 백그라운드 오디오 지원)
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      const isVisible = !document.hidden;
+      setIsPageVisible(isVisible);
+      
+      if (isVisible) {
+        // 페이지가 다시 보일 때, 이전에 재생 중이었다면 재생 재개
+        if (wasPlayingBeforeHide && currentAudio.current && isPaused) {
+          console.log('페이지가 다시 보임, 오디오 재생 재개');
+          currentAudio.current.play().catch(err => {
+            console.error('백그라운드에서 재생 재개 실패:', err);
+          });
+          setIsPaused(false);
+          setWasPlayingBeforeHide(false);
+        }
+        
+        // 페이지가 다시 보일 때 화면 활성화 요청
+        if (isPlaying && !isPaused) {
+          requestWakeLock();
+        }
+      } else {
+        // 페이지가 숨겨질 때, 재생 중이었다면 상태 저장
+        if (isPlaying && !isPaused && currentAudio.current) {
+          console.log('페이지가 숨겨짐, 재생 상태 저장');
+          setWasPlayingBeforeHide(true);
+        }
+      }
+    };
+
+    const handlePageHide = () => {
+      console.log('페이지 숨김 이벤트 발생');
+      setIsPageVisible(false);
+      if (isPlaying && !isPaused && currentAudio.current) {
+        setWasPlayingBeforeHide(true);
+      }
+    };
+
+    const handlePageShow = () => {
+      console.log('페이지 보임 이벤트 발생');
+      setIsPageVisible(true);
+      if (wasPlayingBeforeHide && currentAudio.current && isPaused) {
+        setTimeout(() => {
+          currentAudio.current.play().catch(err => {
+            console.error('페이지 복귀 후 재생 재개 실패:', err);
+          });
+          setIsPaused(false);
+          setWasPlayingBeforeHide(false);
+        }, 100);
+      }
+      
+      // 페이지가 다시 보일 때 재생 중이면 화면 활성화 요청
+      if (isPlaying && !isPaused) {
+        requestWakeLock();
+      }
+    };
+
     const handleBeforeUnload = () => {
       isUnloadingRef.current = true;
+      // 페이지 종료 시 화면 활성화 해제
+      releaseWakeLock();
     };
+
+    // 이벤트 리스너 등록
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      // 컴포넌트 언마운트 시 화면 활성화 해제
+      releaseWakeLock();
     };
-  }, []);
+  }, [isPlaying, isPaused, wasPlayingBeforeHide]);
 
   useEffect(() => {
     const handleSharedContent = async () => {
@@ -3410,6 +3622,10 @@ export default function App() {
               <Fade in={fadeIn} timeout={1000} appear={false}>
                 <span style={isPlaying && currentAudio.current && generatingTake !== currentTake ? { marginLeft: 6 } : {}}>{generatingTake + 1}</span>
               </Fade>
+            )}
+            {/* 화면 활성화 상태 표시 */}
+            {isScreenWakeLockActive && (
+              <span style={{ marginLeft: 6, opacity: 0.7 }}>🔒</span>
             )}
           </span>
         )}
