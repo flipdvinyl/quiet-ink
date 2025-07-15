@@ -2660,8 +2660,17 @@ export default function App() {
       // 클릭한 테이크의 원래 보이스 이름 추출
       const oldVoiceId = takes[customVoiceEditIndex].voiceId;
       const oldVoice = VOICES.find(v => v.id === oldVoiceId);
+      
+      // 22자리 voiceID인 경우도 처리
+      let oldVoiceName = null;
       if (oldVoice) {
-        const oldVoiceName = oldVoice.name;
+        oldVoiceName = oldVoice.name;
+      } else if (oldVoiceId && oldVoiceId.length === 22 && /^[a-zA-Z0-9]+$/.test(oldVoiceId)) {
+        // 22자리 voiceID인 경우 voiceID 자체를 이름으로 사용
+        oldVoiceName = oldVoiceId;
+      }
+      
+      if (oldVoiceName) {
         const newVoiceName = voice.name;
         // takes 전체에서 ::oldVoiceName:: → ::newVoiceName::
         const newTakes = takes.map(take => {
