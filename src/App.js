@@ -3088,7 +3088,9 @@ export default function App() {
   // '+ 다른 사람이 읽기' 버튼을 위한 새로운 핸들러
   const handleAddVoiceToTake = async (voice) => {
     if (customVoiceEditIndex !== null && takes[customVoiceEditIndex]) {
-      // '내가 좋아하는 목소리'인 경우 먼저 임시 목소리 추가
+      let finalVoice = voice;
+      
+      // '내가 좋아하는 목소리'인 경우 voiceID를 직접 사용
       if (voice.isCustom && customVoiceId) {
         // 유효성 검증
         const validation = validateVoiceId(customVoiceId);
@@ -3097,48 +3099,30 @@ export default function App() {
           return;
         }
         
-        // 중복 체크
+        // voiceID를 직접 사용하여 새로운 voice 객체 생성
+        finalVoice = {
+          id: customVoiceId,
+          name: customVoiceId,
+          description: "는 아르바이트에요. 잠시 글을 읽어줘요.",
+          isTemp: true
+        };
+        
+        // 임시 목소리로 추가 (중복 체크 포함)
         const isDuplicate = registeredTempVoices.find(v => v.id === customVoiceId) ||
                            VOICES.find(v => v.id === customVoiceId);
         
         if (!isDuplicate) {
-          const newTempVoice = {
-            id: customVoiceId,
-            name: customVoiceId,
-            description: "는 아르바이트에요. 잠시 글을 읽어줘요.",
-            isTemp: true
-          };
-          
-          // 상태 업데이트를 동기적으로 처리
-          const updatedTempVoices = [...registeredTempVoices, newTempVoice];
-          setRegisteredTempVoices(updatedTempVoices);
-          try {
-            localStorage.setItem('audiobook-temp-voices', JSON.stringify(updatedTempVoices));
-          } catch {}
-          
-          // 임시 목소리 추가 후 해당 voice 객체 업데이트
-          const updatedVoice = {
-            ...voice,
-            id: customVoiceId,
-            name: customVoiceId
-          };
-          voice = updatedVoice;
-        } else {
-          // 이미 존재하는 경우 해당 voice 객체 찾기
-          const existingVoice = registeredTempVoices.find(v => v.id === customVoiceId) ||
-                               VOICES.find(v => v.id === customVoiceId);
-          if (existingVoice) {
-            voice = existingVoice;
-          }
+          setRegisteredTempVoices(prev => {
+            const updated = [...prev, finalVoice];
+            try {
+              localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
         }
       }
       
-      // voice 객체가 업데이트되었는지 확인하고 디버깅
-      console.log('Final voice object:', voice);
-      console.log('Voice ID:', voice.id);
-      console.log('Voice name:', voice.name);
-      
-      const newVoiceName = voice.name;
+      const newVoiceName = finalVoice.name;
       const targetTake = takes[customVoiceEditIndex];
       
       // 해당 테이크에만 보이스 추가
@@ -3147,7 +3131,7 @@ export default function App() {
         ...targetTake,
         text: `::${newVoiceName}::` + targetTake.text,
         displayText: convertTextForDisplay(`::${newVoiceName}::` + targetTake.text),
-        voiceId: voice.id
+        voiceId: finalVoice.id
       };
       
       // 전체 텍스트도 업데이트
