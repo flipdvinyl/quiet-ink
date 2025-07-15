@@ -3022,6 +3022,7 @@ export default function App() {
   }
 
   const [customVoiceEditIndex, setCustomVoiceEditIndex] = useState(null);
+  const [hoveredTakeIndex, setHoveredTakeIndex] = useState(null);
 
   // 기존 handleVoiceSelect 백업
   const _handleVoiceSelect = handleVoiceSelectGlobal;
@@ -3588,11 +3589,14 @@ export default function App() {
                     WebkitTapHighlightColor: 'transparent',
                     position: 'relative',
                   }}
+                  onMouseEnter={() => setHoveredTakeIndex(index)}
+                  onMouseLeave={() => setHoveredTakeIndex(null)}
                   onMouseDown={e => {
                     // 커스텀 보이스 오버레이 또는 삭제 버튼 클릭 시에는 재생하지 않음
                     if (
                       e.target.classList.contains('custom-voice-overlay') ||
                       e.target.classList.contains('delete-voice-btn') ||
+                      e.target.classList.contains('add-voice-btn') ||
                       e.target.closest('.custom-voice-overlay')
                     ) {
                       return;
@@ -3644,7 +3648,7 @@ export default function App() {
                       >
                         {customVoiceName}
                       </span>
-                                            <span
+                      <span
                         className="delete-voice-btn"
                         style={{
                           opacity: 0,
@@ -3684,6 +3688,52 @@ export default function App() {
                         }}
                       >
                         ×
+                      </span>
+                    </Box>
+                  )}
+                  {/* 커스텀 보이스 추가 버튼 (호버 시 표시) */}
+                  {!customVoiceName && hoveredTakeIndex === index && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '-10px',
+                        top: `calc(-${lineHeight * 0.65}em - 10px)` ,
+                        fontSize: `${voiceNameFontSize}px`,
+                        color: isSamgukjiFont() ? '#ffffff99' : '#888',
+                        fontWeight: 400,
+                        zIndex: 2,
+                        pointerEvents: 'auto',
+                        userSelect: 'none',
+                        lineHeight: 1,
+                        background: 'transparent',
+                        paddingTop: '10px',
+                        paddingBottom: '10px',
+                        paddingLeft: '10px',
+                        paddingRight: '10px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                    >
+                      <span
+                        className="add-voice-btn"
+                        style={{
+                          cursor: 'pointer',
+                          fontSize: `${voiceNameFontSize * 1.5}px`,
+                          color: isSamgukjiFont() ? '#ffffff66' : '#666',
+                          fontWeight: 'normal',
+                          transform: 'translate(-3px, 1px)',
+                        }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setCustomVoiceEditIndex(index);
+                          setVoiceMenuOpen(true);
+                        }}
+                      >
+                        +
                       </span>
                     </Box>
                   )}
