@@ -710,16 +710,6 @@ export default function App() {
           const voiceIdMatch = remainingText.match(/^::([a-zA-Z0-9]{22})::/);
           if (voiceIdMatch) {
             const detectedVoiceId = voiceIdMatch[1];
-            // 임시 voice로 등록
-            const tempVoice = {
-              id: detectedVoiceId,
-              name: detectedVoiceId,
-              description: "는 아르바이트에요. 잠시 글을 읽어줘요"
-            };
-            // VOICES에 임시 voice 추가 (이미 존재하지 않는 경우만)
-            if (!VOICES.find(v => v.id === detectedVoiceId)) {
-              VOICES.push(tempVoice);
-            }
             voiceId = detectedVoiceId;
             cleanText = remainingText.replace(/^::[a-zA-Z0-9]{22}::/, '').trim();
           } else {
@@ -783,16 +773,6 @@ export default function App() {
         const voiceIdMatch = takeText.match(/^::([a-zA-Z0-9]{22})::/);
         if (voiceIdMatch) {
           const detectedVoiceId = voiceIdMatch[1];
-          // 임시 voice로 등록
-          const tempVoice = {
-            id: detectedVoiceId,
-            name: detectedVoiceId,
-            description: "는 아르바이트에요. 잠시 글을 읽어줘요"
-          };
-          // VOICES에 임시 voice 추가 (이미 존재하지 않는 경우만)
-          if (!VOICES.find(v => v.id === detectedVoiceId)) {
-            VOICES.push(tempVoice);
-          }
           voiceId = detectedVoiceId;
           cleanText = takeText.replace(/^::[a-zA-Z0-9]{22}::/, '').trim();
         } else {
@@ -2481,7 +2461,7 @@ export default function App() {
         const newTempVoice = {
           id: take.voiceId,
           name: take.voiceId,
-          description: "는 아르바이트에요. 잠시 글을 읽어줘요",
+          description: "는 아르바이트에요. 잠시 글을 읽어줘요.",
           isTemp: true
         };
         tempVoices.push(newTempVoice);
@@ -3728,7 +3708,7 @@ export default function App() {
                       sx={{
                         position: 'absolute',
                         left: '-10px',
-                        top: `calc(-${lineHeight * 0.65}em - 10px)` ,
+                        top: `calc(-${lineHeight * 0.65}em - 8px)` ,
                         fontSize: `${voiceNameFontSize}px`,
                         color: isSamgukjiFont() ? '#ffffff99' : '#888',
                         fontWeight: 400,
