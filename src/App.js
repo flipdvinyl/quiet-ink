@@ -3725,6 +3725,7 @@ export default function App() {
                           fontSize: `${voiceNameFontSize}px`,
                           color: isSamgukjiFont() ? '#ffffff99' : '#888',
                           fontWeight: 400,
+                          lineHeight: 1,
                         }}
                         onClick={e => {
                           e.stopPropagation();
