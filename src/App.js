@@ -3912,6 +3912,7 @@ export default function App() {
               position: 'relative',
               transition: 'all 0.3s',
               zIndex: 1001,
+              textTransform: 'none',
             }}
             disabled={!text}
             onClick={() => {
