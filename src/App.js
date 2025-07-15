@@ -3088,6 +3088,51 @@ export default function App() {
   // '+ 다른 사람이 읽기' 버튼을 위한 새로운 핸들러
   const handleAddVoiceToTake = async (voice) => {
     if (customVoiceEditIndex !== null && takes[customVoiceEditIndex]) {
+      // '내가 좋아하는 목소리'인 경우 먼저 임시 목소리 추가
+      if (voice.isCustom && customVoiceId) {
+        // 유효성 검증
+        const validation = validateVoiceId(customVoiceId);
+        if (!validation.isValid) {
+          alert(validation.message);
+          return;
+        }
+        
+        // 중복 체크
+        const isDuplicate = registeredTempVoices.find(v => v.id === customVoiceId) ||
+                           VOICES.find(v => v.id === customVoiceId);
+        
+        if (!isDuplicate) {
+          const newTempVoice = {
+            id: customVoiceId,
+            name: customVoiceId,
+            description: "는 아르바이트에요. 잠시 글을 읽어줘요.",
+            isTemp: true
+          };
+          
+          setRegisteredTempVoices(prev => {
+            const updated = [...prev, newTempVoice];
+            try {
+              localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+          
+          // 임시 목소리 추가 후 해당 voice 객체 업데이트
+          voice = {
+            ...voice,
+            id: customVoiceId,
+            name: customVoiceId
+          };
+        } else {
+          // 이미 존재하는 경우 해당 voice 객체 찾기
+          const existingVoice = registeredTempVoices.find(v => v.id === customVoiceId) ||
+                               VOICES.find(v => v.id === customVoiceId);
+          if (existingVoice) {
+            voice = existingVoice;
+          }
+        }
+      }
+      
       const newVoiceName = voice.name;
       const targetTake = takes[customVoiceEditIndex];
       
