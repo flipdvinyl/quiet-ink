@@ -2907,11 +2907,14 @@ export default function App() {
   }, []);
 
   // 파일 내 적당한 위치에 추가
+  const prevTakesLengthRef = useRef(0);
   useEffect(() => {
-    if (takes.length > 0 && currentTake !== undefined) {
+    // takes 배열이 새로 생성될 때만 스크롤 (기존 takes 수정 시에는 스크롤하지 않음)
+    if (takes.length > 0 && prevTakesLengthRef.current === 0) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [takes, currentTake]);
+    prevTakesLengthRef.current = takes.length;
+  }, [takes]);
 
   // 1. Add a ref for the TextField
   const manuscriptInputRef = useRef();
@@ -3052,8 +3055,6 @@ export default function App() {
         const newText = text.replace(new RegExp(`::${oldVoiceName}::`, 'g'), `::${newVoiceName}::`);
         // splitTextIntoTakes로 voiceId 동기화
         const syncedTakes = await splitTextIntoTakes(newText);
-        // 수정된 테이크 인덱스를 currentTake로 설정하여 스크롤 방지
-        setCurrentTake(customVoiceEditIndex);
         setTakes(syncedTakes);
         setText(newText);
         setCustomVoiceEditIndex(null);
@@ -3669,8 +3670,6 @@ export default function App() {
                             voiceId: undefined
                           };
                           
-                          // 수정된 테이크 인덱스를 currentTake로 설정하여 스크롤 방지
-                          setCurrentTake(index);
                           setTakes(updatedTakes);
                           takesRef.current = updatedTakes;
                           
