@@ -647,25 +647,43 @@ export default function App() {
       }
       while (remainingText.length > 0) {
         if (remainingText.length <= maxLength) {
-          // ::텍스트::가 제일 앞에 있으면 VOICES에서 name으로 id를 찾아 voiceId로 저장
+          // 22자리 voiceID 감지 (::22자리영문숫자::)
           let voiceId = undefined;
           let cleanText = remainingText;
-          const voiceNameMatch = remainingText.match(/^::([^:]+)::/);
-          if (voiceNameMatch) {
-            const voiceName = voiceNameMatch[1];
-            let foundVoice = VOICES.find(v => v.name === voiceName);
-            if (!foundVoice) {
-              // 유사도 0.75 이상인 보이스 찾기
-              let best = {sim: 0, v: null};
-              for (const v of VOICES) {
-                const sim = similarity(voiceName, v.name);
-                if (sim > best.sim) best = {sim, v};
-              }
-              if (best.sim >= 0.75) foundVoice = best.v;
+          const voiceIdMatch = remainingText.match(/^::([a-zA-Z0-9]{22})::/);
+          if (voiceIdMatch) {
+            const detectedVoiceId = voiceIdMatch[1];
+            // 임시 voice로 등록
+            const tempVoice = {
+              id: detectedVoiceId,
+              name: detectedVoiceId,
+              description: "는 아르바이트에요. 잠시 글을 읽어줘요"
+            };
+            // VOICES에 임시 voice 추가 (이미 존재하지 않는 경우만)
+            if (!VOICES.find(v => v.id === detectedVoiceId)) {
+              VOICES.push(tempVoice);
             }
-            if (foundVoice) {
-              voiceId = foundVoice.id;
-              cleanText = remainingText.replace(/^::[^:]+::/, '').trim();
+            voiceId = detectedVoiceId;
+            cleanText = remainingText.replace(/^::[a-zA-Z0-9]{22}::/, '').trim();
+          } else {
+            // 기존 voice name 감지 로직
+            const voiceNameMatch = remainingText.match(/^::([^:]+)::/);
+            if (voiceNameMatch) {
+              const voiceName = voiceNameMatch[1];
+              let foundVoice = VOICES.find(v => v.name === voiceName);
+              if (!foundVoice) {
+                // 유사도 0.75 이상인 보이스 찾기
+                let best = {sim: 0, v: null};
+                for (const v of VOICES) {
+                  const sim = similarity(voiceName, v.name);
+                  if (sim > best.sim) best = {sim, v};
+                }
+                if (best.sim >= 0.75) foundVoice = best.v;
+              }
+              if (foundVoice) {
+                voiceId = foundVoice.id;
+                cleanText = remainingText.replace(/^::[^:]+::/, '').trim();
+              }
             }
           }
           takes.push({
@@ -705,22 +723,40 @@ export default function App() {
         const takeText = remainingText.slice(0, cutIndex).trim();
         let voiceId = undefined;
         let cleanText = takeText;
-        const voiceNameMatch = takeText.match(/^::([^:]+)::/);
-        if (voiceNameMatch) {
-          const voiceName = voiceNameMatch[1];
-          let foundVoice = VOICES.find(v => v.name === voiceName);
-          if (!foundVoice) {
-            // 유사도 0.75 이상인 보이스 찾기
-            let best = {sim: 0, v: null};
-            for (const v of VOICES) {
-              const sim = similarity(voiceName, v.name);
-              if (sim > best.sim) best = {sim, v};
-            }
-            if (best.sim >= 0.75) foundVoice = best.v;
+        const voiceIdMatch = takeText.match(/^::([a-zA-Z0-9]{22})::/);
+        if (voiceIdMatch) {
+          const detectedVoiceId = voiceIdMatch[1];
+          // 임시 voice로 등록
+          const tempVoice = {
+            id: detectedVoiceId,
+            name: detectedVoiceId,
+            description: "는 아르바이트에요. 잠시 글을 읽어줘요"
+          };
+          // VOICES에 임시 voice 추가 (이미 존재하지 않는 경우만)
+          if (!VOICES.find(v => v.id === detectedVoiceId)) {
+            VOICES.push(tempVoice);
           }
-          if (foundVoice) {
-            voiceId = foundVoice.id;
-            cleanText = takeText.replace(/^::[^:]+::/, '').trim();
+          voiceId = detectedVoiceId;
+          cleanText = takeText.replace(/^::[a-zA-Z0-9]{22}::/, '').trim();
+        } else {
+          // 기존 voice name 감지 로직
+          const voiceNameMatch = takeText.match(/^::([^:]+)::/);
+          if (voiceNameMatch) {
+            const voiceName = voiceNameMatch[1];
+            let foundVoice = VOICES.find(v => v.name === voiceName);
+            if (!foundVoice) {
+              // 유사도 0.75 이상인 보이스 찾기
+              let best = {sim: 0, v: null};
+              for (const v of VOICES) {
+                const sim = similarity(voiceName, v.name);
+                if (sim > best.sim) best = {sim, v};
+              }
+              if (best.sim >= 0.75) foundVoice = best.v;
+            }
+            if (foundVoice) {
+              voiceId = foundVoice.id;
+              cleanText = takeText.replace(/^::[^:]+::/, '').trim();
+            }
           }
         }
         takes.push({
@@ -1646,7 +1682,7 @@ export default function App() {
   }, [isPaused]);
 
   // 보이스 변경시 현재 테이크의 첫 문장부터 자동 재생 (voiceId 명시적으로 전달, 버퍼 초기화)
-  const handleVoiceSelect = (voice) => {
+  const handleVoiceSelectGlobal = (voice) => {
     setIsClosing(true);
     setTimeout(() => {
       setPreset(p => ({ ...p, voice: voice.name }));
@@ -2176,7 +2212,7 @@ export default function App() {
       }
 
       // 유효한 경우 목소리 선택 처리
-      handleVoiceSelect({
+      handleVoiceSelectGlobal({
         id: customVoiceId,
         name: '내가 좋아하는 목소리',
         description: `${customVoiceId} / [↻] 목소리 바꾸기`,
@@ -2613,6 +2649,42 @@ export default function App() {
     const maxLen = Math.max(a.length, b.length);
     return maxLen === 0 ? 1 : 1 - distance / maxLen;
   }
+
+  const [customVoiceEditIndex, setCustomVoiceEditIndex] = useState(null);
+
+  // 기존 handleVoiceSelect 백업
+  const _handleVoiceSelect = handleVoiceSelectGlobal;
+  // 보이스 선택시 테이크별 보이스명 일괄 변경
+  const handleVoiceSelect = async (voice) => {
+    if (customVoiceEditIndex !== null && takes[customVoiceEditIndex]) {
+      // 클릭한 테이크의 원래 보이스 이름 추출
+      const oldVoiceId = takes[customVoiceEditIndex].voiceId;
+      const oldVoice = VOICES.find(v => v.id === oldVoiceId);
+      if (oldVoice) {
+        const oldVoiceName = oldVoice.name;
+        const newVoiceName = voice.name;
+        // takes 전체에서 ::oldVoiceName:: → ::newVoiceName::
+        const newTakes = takes.map(take => {
+          let origText = take.text;
+          // 원본 텍스트에 ::oldVoiceName::이 있었던 경우만 교체
+          if (take.voiceId === oldVoiceId) {
+            origText = `::${newVoiceName}::` + origText.replace(/^::[^:]+::/, '');
+          }
+          return { ...take, text: origText };
+        });
+        const newText = text.replace(new RegExp(`::${oldVoiceName}::`, 'g'), `::${newVoiceName}::`);
+        // splitTextIntoTakes로 voiceId 동기화
+        const syncedTakes = await splitTextIntoTakes(newText);
+        setTakes(syncedTakes);
+        setText(newText);
+        setCustomVoiceEditIndex(null);
+        setVoiceMenuOpen(false);
+        return;
+      }
+    }
+    // 기존 글로벌 보이스 변경 로직
+    _handleVoiceSelect(voice);
+  };
 
   return (
     <Box sx={{ bgcolor: isSamgukjiFont() ? '#0e1755' : theme.background, minHeight: "100vh", color: isSamgukjiFont() ? '#ffffff' : theme.text, pb: 10, fontFamily: "'Mysteria', sans-serif", transition: 'all 0.3s' }}>
@@ -3111,6 +3183,7 @@ export default function App() {
               const fontSize = preset.fontSize[isTabletPC ? 'pc' : 'mobile'];
               const voiceNameFontSize = Math.round(fontSize * 0.6);
               const lineHeight = preset.lineHeight[isTabletPC ? 'pc' : 'mobile'] ?? 1.7;
+              // isCustomOverlayActive, setIsCustomOverlayActive 삭제
               return (
                 <Box
                   key={take.name}
@@ -3121,13 +3194,21 @@ export default function App() {
                     cursor: 'pointer',
                     borderRadius: '8px',
                     transition: 'background-color 0.2s ease-in-out',
+                    // &:active에서 커스텀 보이스 오버레이 클릭 시 배경색이 보이지 않도록 수정
                     '&:active': {
-                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                      backgroundColor: 'transparent',
                     },
                     WebkitTapHighlightColor: 'transparent',
                     position: 'relative',
                   }}
-                  onMouseDown={() => {
+                  onMouseDown={e => {
+                    // 커스텀 보이스 오버레이 클릭 시에는 재생하지 않음
+                    if (
+                      e.target.classList.contains('custom-voice-overlay') ||
+                      e.target.closest('.custom-voice-overlay')
+                    ) {
+                      return;
+                    }
                     hapticFeedback.light();
                     handlePlayFromTake(index);
                   }}
@@ -3135,19 +3216,34 @@ export default function App() {
                   {/* 커스텀 보이스 이름 오버레이 */}
                   {customVoiceName && (
                     <span
+                      className="custom-voice-overlay"
                       style={{
                         position: 'absolute',
-                        left: 0,
-                        top: `calc(-${lineHeight * 0.65}em)`,
+                        left: '-10px',
+                        top: `calc(-${lineHeight * 0.65}em - 10px)` ,
                         fontSize: `${voiceNameFontSize}px`,
                         color: isSamgukjiFont() ? '#ffffff99' : '#888',
                         fontWeight: 400,
                         zIndex: 2,
-                        pointerEvents: 'none',
+                        pointerEvents: 'auto',
                         userSelect: 'none',
                         lineHeight: 1,
                         background: 'transparent',
+                        paddingTop: '15px',
+                        paddingBottom: '15px',
+                        paddingLeft: '10px',
+                        paddingRight: '10px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        transition: 'text-decoration 0.2s',
                       }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setCustomVoiceEditIndex(index);
+                        setVoiceMenuOpen(true);
+                      }}
+                      onMouseOver={e => { e.currentTarget.style.textDecoration = 'underline'; }}
+                      onMouseOut={e => { e.currentTarget.style.textDecoration = 'none'; }}
                     >
                       {customVoiceName}
                     </span>
