@@ -3448,7 +3448,7 @@ export default function App() {
                 }
               }
               const fontSize = preset.fontSize[isTabletPC ? 'pc' : 'mobile'];
-              const voiceNameFontSize = Math.round(fontSize * 0.6);
+              const voiceNameFontSize = Math.round(fontSize * 0.7);
               const lineHeight = preset.lineHeight[isTabletPC ? 'pc' : 'mobile'] ?? 1.7;
               // isCustomOverlayActive, setIsCustomOverlayActive 삭제
               return (
@@ -3487,7 +3487,7 @@ export default function App() {
                       style={{
                         position: 'absolute',
                         left: '-10px',
-                        top: `calc(-${lineHeight * 0.65}em - 10px)` ,
+                        top: `calc(-${lineHeight * 0.75}em - 10px)` ,
                         fontSize: `${voiceNameFontSize}px`,
                         color: isSamgukjiFont() ? '#ffffff99' : '#888',
                         fontWeight: 400,
