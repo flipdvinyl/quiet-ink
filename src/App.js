@@ -1624,14 +1624,58 @@ export default function App() {
   }, [generatingTake]);
 
   // 특정 테이크부터 재생하는 함수 개선: setTimeout 없이 바로 재생
-  const handlePlayFromTake = async (startIndex, voiceId, preventScroll = false) => {
+  const handlePlayFromTake = async (startIndex, voiceId) => {
     stopPlaying();
     setCurrentTake(startIndex);
-    
-    // 커스텀 보이스 수정 시에는 스크롤 방지
-    if (!preventScroll) {
-      handleScrollCurrentTake();
+    handleScrollCurrentTake();
+
+    const newAbortController = new AbortController();
+    ttsAbortControllerRef.current = newAbortController;
+    const { signal } = newAbortController;
+
+    setLoading(true);
+    setIsPlaying(true);
+    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
+    try {
+      setFadeIn(true);
+      setGeneratingTake(startIndex);
+      const url = await convertToSpeech(takesRef.current[startIndex], takesRef.current[startIndex].voiceId ? undefined : useVoiceId, signal);
+      audioBufferRef.current = { [startIndex]: url };
+      if (startIndex < takesRef.current.length - 1) {
+        prepareNextTake(startIndex + 1, useVoiceId, signal);
+      }
+      playTake(startIndex);
+    } catch (e) {
+      if (isUnloadingRef.current) {
+        console.log('TTS generation from take aborted due to page unload.');
+        return;
+      }
+      if (e.name === 'AbortError') {
+        console.log('TTS generation from take aborted.');
+        return;
+      }
+      console.error("재생 시작 실패:", e);
+      // 음성 변환 실패 시 상태 정리만 수행
+      setCustomVoiceId('');
+      // stopPlaying() 대신 아래만 실행
+      if (currentAudio.current) {
+        currentAudio.current.pause();
+        currentAudio.current.currentTime = 0;
+        currentAudio.current.src = '';
+        currentAudio.current.onended = null;
+        currentAudio.current.onplay = null;
+        currentAudio.current.ontimeupdate = null;
+      }
+      
+      // alert만 표시하고 보이스 선택 팝업은 열지 않음
+      alert("음성 변환에 실패했습니다.");
     }
+  };
+
+  // 스크롤 없이 특정 테이크부터 재생하는 함수 (커스텀 보이스 수정용)
+  const handlePlayFromTakeWithoutScroll = async (startIndex, voiceId) => {
+    stopPlaying();
+    setCurrentTake(startIndex);
 
     const newAbortController = new AbortController();
     ttsAbortControllerRef.current = newAbortController;
@@ -1877,7 +1921,18 @@ export default function App() {
       setIsClosing(false);
       stopPlaying();
       audioBufferRef.current = {}; // 버퍼 완전 초기화
-      setTimeout(() => handlePlayFromTake(currentTake, voice.id, true), 0); // 스크롤 방지 플래그 추가
+      
+      // 커스텀 보이스 수정 시에는 스크롤 없이 재생
+      const isCustomVoiceEdit = customVoiceEditIndex !== null;
+      setTimeout(() => {
+        if (isCustomVoiceEdit) {
+          // 커스텀 보이스 수정 시에는 스크롤 없이 재생
+          handlePlayFromTakeWithoutScroll(currentTake, voice.id);
+        } else {
+          // 일반 보이스 변경 시에는 기존 로직 사용
+          handlePlayFromTake(currentTake, voice.id);
+        }
+      }, 0);
     }, 1000);
   };
 
@@ -3682,8 +3737,7 @@ export default function App() {
                           
                           console.log(`테이크 ${index}의 커스텀 보이스 제거됨`);
                           
-                          // 커스텀 보이스 삭제 시에는 스크롤 방지
-                          // 현재 재생 중인 테이크가 삭제된 테이크라면 재생 중지
+                          // 커스텀 보이스 삭제 후 현재 테이크가 삭제된 테이크라면 재생 중지
                           if (currentTake === index && isPlaying) {
                             stopPlaying();
                           }
