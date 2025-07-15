@@ -3589,9 +3589,10 @@ export default function App() {
                     position: 'relative',
                   }}
                   onMouseDown={e => {
-                    // 커스텀 보이스 오버레이 클릭 시에는 재생하지 않음
+                    // 커스텀 보이스 오버레이 또는 삭제 버튼 클릭 시에는 재생하지 않음
                     if (
                       e.target.classList.contains('custom-voice-overlay') ||
+                      e.target.classList.contains('delete-voice-btn') ||
                       e.target.closest('.custom-voice-overlay')
                     ) {
                       return;
