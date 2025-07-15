@@ -3725,9 +3725,6 @@ export default function App() {
                           fontSize: `${voiceNameFontSize}px`,
                           color: isSamgukjiFont() ? '#ffffff99' : '#888',
                           fontWeight: 400,
-                          textDecoration: 'underline',
-                          textUnderlineOffset: '5px',
-                          textDecorationColor: isSamgukjiFont() ? '#ffffff66' : '#666',
                         }}
                         onClick={e => {
                           e.stopPropagation();
@@ -3735,7 +3732,7 @@ export default function App() {
                           setVoiceMenuOpen(true);
                         }}
                       >
-                        다른사람이 읽기
+                        + 다른 사람이 읽기
                       </span>
                     </Box>
                   )}
