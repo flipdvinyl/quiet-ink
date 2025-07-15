@@ -3722,10 +3722,12 @@ export default function App() {
                         className="add-voice-btn"
                         style={{
                           cursor: 'pointer',
-                          fontSize: `${voiceNameFontSize * 1.5}px`,
-                          color: isSamgukjiFont() ? '#ffffff66' : '#666',
-                          fontWeight: 'normal',
-                          transform: 'translate(-3px, 1px)',
+                          fontSize: `${voiceNameFontSize}px`,
+                          color: isSamgukjiFont() ? '#ffffff99' : '#888',
+                          fontWeight: 400,
+                          textDecoration: 'underline',
+                          textUnderlineOffset: '5px',
+                          textDecorationColor: isSamgukjiFont() ? '#ffffff66' : '#666',
                         }}
                         onClick={e => {
                           e.stopPropagation();
@@ -3733,7 +3735,7 @@ export default function App() {
                           setVoiceMenuOpen(true);
                         }}
                       >
-                        +
+                        다른사람이 읽기
                       </span>
                     </Box>
                   )}
