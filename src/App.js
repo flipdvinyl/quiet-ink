@@ -4075,53 +4075,27 @@ export default function App() {
                     }
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span
-                      style={{
-                        color: theme.text,
-                        textDecoration: 'underline',
-                        textUnderlineOffset: '5px',
-                        textDecorationColor: `${theme.text}66`,
-                        cursor: v.isCustom ? 'pointer' : 'inherit',
-                  }}
-                      {...(v.isCustom ? {
-                        onMouseDown: (e) => {
-                          e.stopPropagation();
-                          if (!customVoiceId) {
-                            alert('Voice ID 미 입력');
-                            return;
-                          }
-                          handleCustomVoiceSelect();
+                  <span
+                    style={{
+                      color: theme.text,
+                      textDecoration: 'underline',
+                      textUnderlineOffset: '5px',
+                      textDecorationColor: `${theme.text}66`,
+                      cursor: v.isCustom ? 'pointer' : 'inherit',
+                }}
+                    {...(v.isCustom ? {
+                      onMouseDown: (e) => {
+                        e.stopPropagation();
+                        if (!customVoiceId) {
+                          alert('Voice ID 미 입력');
+                          return;
                         }
-                      } : {})}
-                >
-                  {v.name}
-                    </span>
-                    {v.isTemp && (
-                      <span
-                        style={{
-                          cursor: 'pointer',
-                          fontSize: '32px',
-                          color: `${theme.text}66`,
-                          marginLeft: '8px',
-                          opacity: 0.7,
-                          transition: 'opacity 0.2s',
-                          padding: '5px',
-                          display: 'inline-block',
-                          lineHeight: '1',
-                        }}
-                        onMouseEnter={(e) => e.target.style.opacity = '1'}
-                        onMouseLeave={(e) => e.target.style.opacity = '0.7'}
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          handleDeleteCustomVoice(v.id);
-                        }}
-                      >
-                        ×
-                      </span>
-                    )}
-                  </Box>
+                        handleCustomVoiceSelect();
+                      }
+                    } : {})}
+              >
+                {v.name}
+                  </span>
                   {v.introText && (
                     <span style={{
                       color: `${theme.text}B3`,
@@ -4169,6 +4143,30 @@ export default function App() {
                       cursor: v.isCustom ? 'pointer' : 'default',
                     }}>
                       {v.description}
+                      {v.isTemp && (
+                        <span
+                          style={{
+                            cursor: 'pointer',
+                            fontSize: '22px',
+                            color: `${theme.text}66`,
+                            marginLeft: '10px',
+                            opacity: 0.7,
+                            transition: 'opacity 0.2s',
+                            padding: '5px',
+                            display: 'inline-block',
+                            lineHeight: '1',
+                          }}
+                          onMouseEnter={(e) => e.target.style.opacity = '1'}
+                          onMouseLeave={(e) => e.target.style.opacity = '0.7'}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handleDeleteCustomVoice(v.id);
+                          }}
+                        >
+                          ×
+                        </span>
+                      )}
                     </span>
                   )}
                 </Typography>
