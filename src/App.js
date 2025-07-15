@@ -3113,6 +3113,27 @@ export default function App() {
           voiceId: customVoiceId
         };
         
+        // 유효한 voiceID를 임시 목소리로 추가 (중복 체크)
+        const isDuplicate = registeredTempVoices.find(v => v.id === customVoiceId) ||
+                           VOICES.find(v => v.id === customVoiceId);
+        
+        if (!isDuplicate) {
+          const newTempVoice = {
+            id: customVoiceId,
+            name: customVoiceId,
+            description: "는 아르바이트에요. 잠시 글을 읽어줘요.",
+            isTemp: true
+          };
+          
+          setRegisteredTempVoices(prev => {
+            const updated = [...prev, newTempVoice];
+            try {
+              localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+        }
+        
         // 전체 텍스트도 업데이트
         const newText = text.replace(targetTake.text, newTakes[customVoiceEditIndex].text);
         
