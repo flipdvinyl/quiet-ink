@@ -1672,54 +1672,6 @@ export default function App() {
     }
   };
 
-  // 스크롤 없이 특정 테이크부터 재생하는 함수 (커스텀 보이스 수정용)
-  const handlePlayFromTakeWithoutScroll = async (startIndex, voiceId) => {
-    stopPlaying();
-    setCurrentTake(startIndex);
-
-    const newAbortController = new AbortController();
-    ttsAbortControllerRef.current = newAbortController;
-    const { signal } = newAbortController;
-
-    setLoading(true);
-    setIsPlaying(true);
-    const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
-    try {
-      setFadeIn(true);
-      setGeneratingTake(startIndex);
-      const url = await convertToSpeech(takesRef.current[startIndex], takesRef.current[startIndex].voiceId ? undefined : useVoiceId, signal);
-      audioBufferRef.current = { [startIndex]: url };
-      if (startIndex < takesRef.current.length - 1) {
-        prepareNextTake(startIndex + 1, useVoiceId, signal);
-      }
-      playTake(startIndex);
-    } catch (e) {
-      if (isUnloadingRef.current) {
-        console.log('TTS generation from take aborted due to page unload.');
-        return;
-      }
-      if (e.name === 'AbortError') {
-        console.log('TTS generation from take aborted.');
-        return;
-      }
-      console.error("재생 시작 실패:", e);
-      // 음성 변환 실패 시 상태 정리만 수행
-      setCustomVoiceId('');
-      // stopPlaying() 대신 아래만 실행
-      if (currentAudio.current) {
-        currentAudio.current.pause();
-        currentAudio.current.currentTime = 0;
-        currentAudio.current.src = '';
-        currentAudio.current.onended = null;
-        currentAudio.current.onplay = null;
-        currentAudio.current.ontimeupdate = null;
-      }
-      
-      // alert만 표시하고 보이스 선택 팝업은 열지 않음
-      alert("음성 변환에 실패했습니다.");
-    }
-  };
-
   // 최상단 스크롤
   const handleScrollTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1921,18 +1873,7 @@ export default function App() {
       setIsClosing(false);
       stopPlaying();
       audioBufferRef.current = {}; // 버퍼 완전 초기화
-      
-      // 커스텀 보이스 수정 시에는 스크롤 없이 재생
-      const isCustomVoiceEdit = customVoiceEditIndex !== null;
-      setTimeout(() => {
-        if (isCustomVoiceEdit) {
-          // 커스텀 보이스 수정 시에는 스크롤 없이 재생
-          handlePlayFromTakeWithoutScroll(currentTake, voice.id);
-        } else {
-          // 일반 보이스 변경 시에는 기존 로직 사용
-          handlePlayFromTake(currentTake, voice.id);
-        }
-      }, 0);
+      setTimeout(() => handlePlayFromTake(currentTake, voice.id), 0);
     }, 1000);
   };
 
@@ -2967,10 +2908,10 @@ export default function App() {
 
   // 파일 내 적당한 위치에 추가
   useEffect(() => {
-    if (takes.length > 0) {
+    if (takes.length > 0 && currentTake !== undefined) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [takes]);
+  }, [takes, currentTake]);
 
   // 1. Add a ref for the TextField
   const manuscriptInputRef = useRef();
@@ -3111,6 +3052,8 @@ export default function App() {
         const newText = text.replace(new RegExp(`::${oldVoiceName}::`, 'g'), `::${newVoiceName}::`);
         // splitTextIntoTakes로 voiceId 동기화
         const syncedTakes = await splitTextIntoTakes(newText);
+        // 수정된 테이크 인덱스를 currentTake로 설정하여 스크롤 방지
+        setCurrentTake(customVoiceEditIndex);
         setTakes(syncedTakes);
         setText(newText);
         setCustomVoiceEditIndex(null);
@@ -3726,6 +3669,8 @@ export default function App() {
                             voiceId: undefined
                           };
                           
+                          // 수정된 테이크 인덱스를 currentTake로 설정하여 스크롤 방지
+                          setCurrentTake(index);
                           setTakes(updatedTakes);
                           takesRef.current = updatedTakes;
                           
@@ -3736,11 +3681,6 @@ export default function App() {
                           }
                           
                           console.log(`테이크 ${index}의 커스텀 보이스 제거됨`);
-                          
-                          // 커스텀 보이스 삭제 후 현재 테이크가 삭제된 테이크라면 재생 중지
-                          if (currentTake === index && isPlaying) {
-                            stopPlaying();
-                          }
                         }}
                       >
                         ×
