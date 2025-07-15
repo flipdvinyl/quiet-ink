@@ -4079,16 +4079,20 @@ export default function App() {
                       <span
                         style={{
                           cursor: 'pointer',
-                          fontSize: '16px',
+                          fontSize: '32px',
                           color: `${theme.text}66`,
                           marginLeft: '8px',
                           opacity: 0.7,
                           transition: 'opacity 0.2s',
+                          padding: '5px',
+                          display: 'inline-block',
+                          lineHeight: '1',
                         }}
                         onMouseEnter={(e) => e.target.style.opacity = '1'}
                         onMouseLeave={(e) => e.target.style.opacity = '0.7'}
-                        onClick={(e) => {
+                        onMouseDown={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
                           handleDeleteCustomVoice(v.id);
                         }}
                       >
