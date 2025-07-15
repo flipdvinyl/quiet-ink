@@ -3061,10 +3061,41 @@ export default function App() {
         setCustomVoiceEditIndex(null);
         setVoiceMenuOpen(false);
         return;
+      } else {
+        // 기존 보이스가 없는 경우 (새로 추가하는 경우)
+        await handleAddVoiceToTake(voice);
+        return;
       }
     }
     // 기존 글로벌 보이스 변경 로직
     _handleVoiceSelect(voice);
+  };
+
+  // '+ 다른 사람이 읽기' 버튼을 위한 새로운 핸들러
+  const handleAddVoiceToTake = async (voice) => {
+    if (customVoiceEditIndex !== null && takes[customVoiceEditIndex]) {
+      const newVoiceName = voice.name;
+      const targetTake = takes[customVoiceEditIndex];
+      
+      // 해당 테이크에만 보이스 추가
+      const newTakes = [...takes];
+      newTakes[customVoiceEditIndex] = {
+        ...targetTake,
+        text: `::${newVoiceName}::` + targetTake.text,
+        displayText: convertTextForDisplay(`::${newVoiceName}::` + targetTake.text),
+        voiceId: voice.id
+      };
+      
+      // 전체 텍스트도 업데이트
+      const newText = text.replace(targetTake.text, newTakes[customVoiceEditIndex].text);
+      
+      // splitTextIntoTakes로 voiceId 동기화
+      const syncedTakes = await splitTextIntoTakes(newText);
+      setTakes(syncedTakes);
+      setText(newText);
+      setCustomVoiceEditIndex(null);
+      setVoiceMenuOpen(false);
+    }
   };
 
   return (
