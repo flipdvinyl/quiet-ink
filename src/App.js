@@ -4149,12 +4149,12 @@ export default function App() {
                             cursor: 'pointer',
                             fontSize: '22px',
                             color: `${theme.text}66`,
-                            marginLeft: '10px',
                             opacity: 0.7,
                             transition: 'opacity 0.2s',
                             padding: '5px',
                             display: 'inline-block',
                             lineHeight: '1',
+                            verticalAlign: 'middle',
                           }}
                           onMouseEnter={(e) => e.target.style.opacity = '1'}
                           onMouseLeave={(e) => e.target.style.opacity = '0.7'}
