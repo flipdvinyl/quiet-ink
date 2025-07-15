@@ -3088,61 +3088,63 @@ export default function App() {
   // '+ 다른 사람이 읽기' 버튼을 위한 새로운 핸들러
   const handleAddVoiceToTake = async (voice) => {
     if (customVoiceEditIndex !== null && takes[customVoiceEditIndex]) {
-      let finalVoice = voice;
+      const targetTake = takes[customVoiceEditIndex];
       
-      // '내가 좋아하는 목소리'인 경우 voiceID를 직접 사용
-      if (voice.isCustom && customVoiceId) {
-        // 유효성 검증
+      // '내가 좋아하는 목소리'인 경우 특별 처리
+      if (voice.id === 'custom') {
+        if (!customVoiceId) {
+          alert('Voice ID 미 입력');
+          return;
+        }
+        
+        // Voice ID 유효성 검증
         const validation = validateVoiceId(customVoiceId);
         if (!validation.isValid) {
           alert(validation.message);
           return;
         }
         
-        // voiceID를 직접 사용하여 새로운 voice 객체 생성
-        finalVoice = {
-          id: customVoiceId,
-          name: customVoiceId,
-          description: "는 아르바이트에요. 잠시 글을 읽어줘요.",
-          isTemp: true
+        // 커스텀 보이스로 처리
+        const newTakes = [...takes];
+        newTakes[customVoiceEditIndex] = {
+          ...targetTake,
+          text: `::${customVoiceId}::` + targetTake.text,
+          displayText: convertTextForDisplay(`::${customVoiceId}::` + targetTake.text),
+          voiceId: customVoiceId
         };
         
-        // 임시 목소리로 추가 (중복 체크 포함)
-        const isDuplicate = registeredTempVoices.find(v => v.id === customVoiceId) ||
-                           VOICES.find(v => v.id === customVoiceId);
+        // 전체 텍스트도 업데이트
+        const newText = text.replace(targetTake.text, newTakes[customVoiceEditIndex].text);
         
-        if (!isDuplicate) {
-          setRegisteredTempVoices(prev => {
-            const updated = [...prev, finalVoice];
-            try {
-              localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
-            } catch {}
-            return updated;
-          });
-        }
+        // splitTextIntoTakes로 voiceId 동기화
+        const syncedTakes = await splitTextIntoTakes(newText);
+        setTakes(syncedTakes);
+        setText(newText);
+        setCustomVoiceEditIndex(null);
+        setVoiceMenuOpen(false);
+      } else {
+        // 일반 보이스 처리
+        const newVoiceName = voice.name;
+        
+        // 해당 테이크에만 보이스 추가
+        const newTakes = [...takes];
+        newTakes[customVoiceEditIndex] = {
+          ...targetTake,
+          text: `::${newVoiceName}::` + targetTake.text,
+          displayText: convertTextForDisplay(`::${newVoiceName}::` + targetTake.text),
+          voiceId: voice.id
+        };
+        
+        // 전체 텍스트도 업데이트
+        const newText = text.replace(targetTake.text, newTakes[customVoiceEditIndex].text);
+        
+        // splitTextIntoTakes로 voiceId 동기화
+        const syncedTakes = await splitTextIntoTakes(newText);
+        setTakes(syncedTakes);
+        setText(newText);
+        setCustomVoiceEditIndex(null);
+        setVoiceMenuOpen(false);
       }
-      
-      const newVoiceName = finalVoice.name;
-      const targetTake = takes[customVoiceEditIndex];
-      
-      // 해당 테이크에만 보이스 추가
-      const newTakes = [...takes];
-      newTakes[customVoiceEditIndex] = {
-        ...targetTake,
-        text: `::${newVoiceName}::` + targetTake.text,
-        displayText: convertTextForDisplay(`::${newVoiceName}::` + targetTake.text),
-        voiceId: finalVoice.id
-      };
-      
-      // 전체 텍스트도 업데이트
-      const newText = text.replace(targetTake.text, newTakes[customVoiceEditIndex].text);
-      
-      // splitTextIntoTakes로 voiceId 동기화
-      const syncedTakes = await splitTextIntoTakes(newText);
-      setTakes(syncedTakes);
-      setText(newText);
-      setCustomVoiceEditIndex(null);
-      setVoiceMenuOpen(false);
     }
   };
 
