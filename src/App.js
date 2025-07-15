@@ -4155,7 +4155,7 @@ export default function App() {
                             display: 'inline-block',
                             lineHeight: '1',
                             verticalAlign: 'middle',
-                            transform: 'translateY(-10%)',
+                            transform: 'translateY(-5%)',
                           }}
                           onMouseEnter={(e) => e.target.style.opacity = '1'}
                           onMouseLeave={(e) => e.target.style.opacity = '0.7'}
