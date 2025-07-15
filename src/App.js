@@ -1876,6 +1876,18 @@ export default function App() {
     }, 1000);
   };
 
+  // 커스텀 보이스 삭제 핸들러
+  const handleDeleteCustomVoice = (voiceId) => {
+    hapticFeedback.light();
+    setRegisteredTempVoices(prev => {
+      const updated = prev.filter(v => v.id !== voiceId);
+      try {
+        localStorage.setItem('audiobook-temp-voices', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
   // 풀다운 메뉴 바깥 클릭 시 닫힘 처리는 PopupCard로 이동
   
   // Home icon position for animation
@@ -4041,27 +4053,49 @@ export default function App() {
                     }
                   }}
                 >
-                  <span
-                    style={{
-                      color: theme.text,
-                      textDecoration: 'underline',
-                      textUnderlineOffset: '5px',
-                      textDecorationColor: `${theme.text}66`,
-                      cursor: v.isCustom ? 'pointer' : 'inherit',
-                }}
-                    {...(v.isCustom ? {
-                      onMouseDown: (e) => {
-                        e.stopPropagation();
-                        if (!customVoiceId) {
-                          alert('Voice ID 미 입력');
-                          return;
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span
+                      style={{
+                        color: theme.text,
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '5px',
+                        textDecorationColor: `${theme.text}66`,
+                        cursor: v.isCustom ? 'pointer' : 'inherit',
+                  }}
+                      {...(v.isCustom ? {
+                        onMouseDown: (e) => {
+                          e.stopPropagation();
+                          if (!customVoiceId) {
+                            alert('Voice ID 미 입력');
+                            return;
+                          }
+                          handleCustomVoiceSelect();
                         }
-                        handleCustomVoiceSelect();
-                      }
-                    } : {})}
-              >
-                {v.name}
-                  </span>
+                      } : {})}
+                >
+                  {v.name}
+                    </span>
+                    {v.isTemp && (
+                      <span
+                        style={{
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          color: `${theme.text}66`,
+                          marginLeft: '8px',
+                          opacity: 0.7,
+                          transition: 'opacity 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.target.style.opacity = '1'}
+                        onMouseLeave={(e) => e.target.style.opacity = '0.7'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCustomVoice(v.id);
+                        }}
+                      >
+                        ×
+                      </span>
+                    )}
+                  </Box>
                   {v.introText && (
                     <span style={{
                       color: `${theme.text}B3`,
