@@ -198,6 +198,18 @@ export default function App() {
   const [isScreenWakeLockActive, setIsScreenWakeLockActive] = useState(false);
   const wakeLockRef = useRef(null);
   
+  // 백그라운드 프로세스 관리를 위한 상태
+  const [backgroundProcessState, setBackgroundProcessState] = useState({
+    isGenerating: false,
+    pendingTakes: [],
+    currentProcess: null
+  });
+  const backgroundProcessRef = useRef({
+    isGenerating: false,
+    pendingTakes: [],
+    currentProcess: null
+  });
+  
   // 언어 설정
   const [currentLanguage, setCurrentLanguage] = useState(() => {
     try {
@@ -1112,20 +1124,33 @@ export default function App() {
     }
   };
 
-  // 다음 Take 미리 생성
+  // 다음 Take 미리 생성 (백그라운드 프로세스 지원)
   const prepareNextTake = async (nextIndex, voiceId, signal) => {
     const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     if (nextIndex >= takesRef.current.length || audioBufferRef.current[nextIndex]) {
       console.log(`Skip preparing take ${nextIndex}: ${nextIndex >= takesRef.current.length ? 'end of takes' : 'already in buffer'}`);
       return;
     }
+    
+    // 백그라운드 프로세스 상태 업데이트
+    backgroundProcessRef.current.isGenerating = true;
+    backgroundProcessRef.current.currentProcess = { takeIndex: nextIndex, voiceId: useVoiceId };
+    setBackgroundProcessState(prev => ({
+      ...prev,
+      isGenerating: true,
+      currentProcess: { takeIndex: nextIndex, voiceId: useVoiceId }
+    }));
+    
     try {
       console.log(`Preparing take ${nextIndex}`);
       setFadeIn(true);
       setGeneratingTake(nextIndex);
+      
+      // 백그라운드에서도 안정적인 TTS 생성
       const audioUrl = await convertToSpeech(takesRef.current[nextIndex], takesRef.current[nextIndex].voiceId ? undefined : useVoiceId, signal);
       console.log(`Successfully prepared take ${nextIndex}, URL: ${audioUrl}`);
       audioBufferRef.current[nextIndex] = audioUrl;
+      
       // 생성 완료 시 애니메이션 중지 (현재 생성중인 테이크가 지금 끝난 테이크와 같다면)
       setGeneratingTake(currentGeneratingTake => {
         if (currentGeneratingTake === nextIndex) {
@@ -1133,6 +1158,16 @@ export default function App() {
         }
         return currentGeneratingTake; // 다른 테이크가 생성 중이면 그대로 둠
       });
+      
+      // 백그라운드 프로세스 상태 업데이트
+      backgroundProcessRef.current.isGenerating = false;
+      backgroundProcessRef.current.currentProcess = null;
+      setBackgroundProcessState(prev => ({
+        ...prev,
+        isGenerating: false,
+        currentProcess: null
+      }));
+      
       // 오디오 생성 완료 시점에 자동재생 대기 플래그 확인
       if (autoPlayPendingIndexRef.current === nextIndex) {
         playTake(nextIndex, signal);
@@ -1149,6 +1184,15 @@ export default function App() {
           return currentGeneratingTake;
         });
       }
+      
+      // 백그라운드 프로세스 상태 업데이트 (실패 시)
+      backgroundProcessRef.current.isGenerating = false;
+      backgroundProcessRef.current.currentProcess = null;
+      setBackgroundProcessState(prev => ({
+        ...prev,
+        isGenerating: false,
+        currentProcess: null
+      }));
     }
   };
 
@@ -1460,16 +1504,25 @@ export default function App() {
         
         // 다음 테이크 재생 시도 (페이지가 숨겨져 있어도 재생)
         setTimeout(() => {
+          // 백그라운드에서도 안정적인 다음 테이크 재생
+          const nextTakeIndex = takeIndex + 1;
+          
+          // 다음 테이크가 준비되어 있지 않다면 먼저 생성
+          if (nextTakeIndex < takesRef.current.length && !audioBufferRef.current[nextTakeIndex]) {
+            console.log(`백그라운드에서 다음 테이크 ${nextTakeIndex} 생성 시작`);
+            prepareNextTake(nextTakeIndex, null, signal);
+          }
+          
           // 페이지가 숨겨져 있거나 AudioContext가 일시정지 상태라도 재생 시도
           if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
             audioContextRef.current.resume().then(() => {
-              playTake(takeIndex + 1, signal);
+              playTake(nextTakeIndex, signal);
             }).catch(err => {
               console.warn('AudioContext 재개 실패, 재생 시도:', err);
-              playTake(takeIndex + 1, signal);
+              playTake(nextTakeIndex, signal);
             });
           } else {
-            playTake(takeIndex + 1, signal);
+            playTake(nextTakeIndex, signal);
           }
         }, 1000);
       };
@@ -1532,6 +1585,18 @@ export default function App() {
     
     // 화면 활성화 해제
     releaseWakeLock();
+    
+    // 백그라운드 프로세스 상태 초기화
+    backgroundProcessRef.current = {
+      isGenerating: false,
+      pendingTakes: [],
+      currentProcess: null
+    };
+    setBackgroundProcessState({
+      isGenerating: false,
+      pendingTakes: [],
+      currentProcess: null
+    });
     
     setIsPlaying(false);
     setIsPaused(false);
@@ -2707,6 +2772,21 @@ export default function App() {
           setIsPaused(false);
           setWasPlayingBeforeHide(false);
         }, 100);
+      }
+      
+      // 백그라운드 프로세스 복구
+      if (backgroundProcessRef.current.isGenerating && backgroundProcessRef.current.currentProcess) {
+        console.log('백그라운드 프로세스 복구 시도:', backgroundProcessRef.current.currentProcess);
+        const { takeIndex, voiceId } = backgroundProcessRef.current.currentProcess;
+        
+        // 진행 중인 TTS 생성 프로세스 재개
+        setTimeout(() => {
+          if (takesRef.current[takeIndex] && !audioBufferRef.current[takeIndex]) {
+            console.log(`백그라운드에서 중단된 take ${takeIndex} 생성 재개`);
+            const { signal } = ttsAbortControllerRef.current || { signal: undefined };
+            prepareNextTake(takeIndex, voiceId, signal);
+          }
+        }, 200);
       }
       
       // 페이지가 다시 보일 때 재생 중이면 화면 활성화 요청
