@@ -1624,10 +1624,14 @@ export default function App() {
   }, [generatingTake]);
 
   // 특정 테이크부터 재생하는 함수 개선: setTimeout 없이 바로 재생
-  const handlePlayFromTake = async (startIndex, voiceId) => {
+  const handlePlayFromTake = async (startIndex, voiceId, preventScroll = false) => {
     stopPlaying();
     setCurrentTake(startIndex);
-    handleScrollCurrentTake();
+    
+    // 커스텀 보이스 수정 시에는 스크롤 방지
+    if (!preventScroll) {
+      handleScrollCurrentTake();
+    }
 
     const newAbortController = new AbortController();
     ttsAbortControllerRef.current = newAbortController;
@@ -1873,7 +1877,7 @@ export default function App() {
       setIsClosing(false);
       stopPlaying();
       audioBufferRef.current = {}; // 버퍼 완전 초기화
-      setTimeout(() => handlePlayFromTake(currentTake, voice.id), 0);
+      setTimeout(() => handlePlayFromTake(currentTake, voice.id, true), 0); // 스크롤 방지 플래그 추가
     }, 1000);
   };
 
@@ -3599,12 +3603,11 @@ export default function App() {
                 >
                   {/* 커스텀 보이스 이름 오버레이 */}
                   {customVoiceName && (
-                    <span
-                      className="custom-voice-overlay"
-                      style={{
+                    <Box
+                      sx={{
                         position: 'absolute',
                         left: '-10px',
-                        top: `calc(-${lineHeight * 0.75}em - 10px)` ,
+                        top: `calc(-${lineHeight * 0.65}em - 10px)` ,
                         fontSize: `${voiceNameFontSize}px`,
                         color: isSamgukjiFont() ? '#ffffff99' : '#888',
                         fontWeight: 400,
@@ -3620,17 +3623,75 @@ export default function App() {
                         borderRadius: '4px',
                         cursor: 'pointer',
                         transition: 'text-decoration 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
                       }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        setCustomVoiceEditIndex(index);
-                        setVoiceMenuOpen(true);
+                      onMouseOver={e => { 
+                        e.currentTarget.querySelector('.delete-voice-btn').style.opacity = '1';
                       }}
-                      onMouseOver={e => { e.currentTarget.style.textDecoration = 'underline'; }}
-                      onMouseOut={e => { e.currentTarget.style.textDecoration = 'none'; }}
+                      onMouseOut={e => { 
+                        e.currentTarget.querySelector('.delete-voice-btn').style.opacity = '0';
+                      }}
                     >
-                      {customVoiceName}
-                    </span>
+                      <span
+                        className="custom-voice-overlay"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setCustomVoiceEditIndex(index);
+                          setVoiceMenuOpen(true);
+                        }}
+                      >
+                        {customVoiceName}
+                      </span>
+                                            <span
+                        className="delete-voice-btn"
+                        style={{
+                          opacity: 0,
+                          transition: 'opacity 0.2s',
+                          cursor: 'pointer',
+                          fontSize: `${voiceNameFontSize * 1.5}px`,
+                          color: isSamgukjiFont() ? '#ffffff66' : '#666',
+                          fontWeight: 'normal',
+                          transform: 'translate(-3px, 1px)',
+                        }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          // 해당 테이크의 커스텀 보이스 제거
+                          const updatedTakes = [...takesRef.current];
+                          const takeText = updatedTakes[index].text;
+                          
+                          // ::보이스이름:: 또는 ::voiceID:: 패턴 제거
+                          const cleanedText = takeText.replace(/^::[^:]+::/, '').trim();
+                          
+                          updatedTakes[index] = {
+                            ...updatedTakes[index],
+                            text: cleanedText,
+                            displayText: convertTextForDisplay(cleanedText),
+                            voiceId: undefined
+                          };
+                          
+                          setTakes(updatedTakes);
+                          takesRef.current = updatedTakes;
+                          
+                          // 해당 테이크의 오디오 버퍼도 제거 (재생 시 다시 생성됨)
+                          if (audioBufferRef.current[index]) {
+                            URL.revokeObjectURL(audioBufferRef.current[index]);
+                            delete audioBufferRef.current[index];
+                          }
+                          
+                          console.log(`테이크 ${index}의 커스텀 보이스 제거됨`);
+                          
+                          // 커스텀 보이스 삭제 시에는 스크롤 방지
+                          // 현재 재생 중인 테이크가 삭제된 테이크라면 재생 중지
+                          if (currentTake === index && isPlaying) {
+                            stopPlaying();
+                          }
+                        }}
+                      >
+                        ×
+                      </span>
+                    </Box>
                   )}
                   {generatingTake === index ? (
                     <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
