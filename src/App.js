@@ -1008,11 +1008,11 @@ export default function App() {
 
   // 실제 테이크 번호 계산 (이미지 제외)
   const getActualTakeNumber = (index) => {
-    if (!takes || index < 0) return 0;
+    if (!takes || index < 0 || index >= takes.length) return 0;
     
     let actualNumber = 0;
     for (let i = 0; i <= index; i++) {
-      if (!takes[i].isImage) {
+      if (takes[i] && !takes[i].isImage) {
         actualNumber++;
       }
     }
