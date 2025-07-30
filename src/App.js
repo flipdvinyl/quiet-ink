@@ -991,7 +991,7 @@ export default function App() {
       >
         <img
           src={imageUrl}
-          alt={`이미지 ${takeIndex + 1}`}
+          alt="이미지"
           style={{
             width: '95%',
             height: 'auto',
@@ -1004,6 +1004,19 @@ export default function App() {
         />
       </Box>
     );
+  };
+
+  // 실제 테이크 번호 계산 (이미지 제외)
+  const getActualTakeNumber = (index) => {
+    if (!takes || index < 0) return 0;
+    
+    let actualNumber = 0;
+    for (let i = 0; i <= index; i++) {
+      if (!takes[i].isImage) {
+        actualNumber++;
+      }
+    }
+    return actualNumber;
   };
 
   // 강조 표시된 텍스트를 렌더링하는 컴포넌트(항상 동일한 기준)
@@ -3968,12 +3981,12 @@ export default function App() {
           <span>
             {/* 현재 재생중인 테이크 번호 */}
             {isPlaying && currentAudio.current && generatingTake !== currentTake && (
-              <span>{currentTake + 1}</span>
+              <span>{getActualTakeNumber(currentTake)}</span>
             )}
             {/* 생성중인 테이크 번호(깜빡임) */}
             {generatingTake !== null && (
               <Fade in={fadeIn} timeout={1000} appear={false}>
-                <span style={isPlaying && currentAudio.current && generatingTake !== currentTake ? { marginLeft: 6 } : {}}>{generatingTake + 1}</span>
+                <span style={isPlaying && currentAudio.current && generatingTake !== currentTake ? { marginLeft: 6 } : {}}>{getActualTakeNumber(generatingTake)}</span>
               </Fade>
             )}
 
