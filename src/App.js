@@ -704,18 +704,18 @@ export default function App() {
       }
       
       // 이미지 URL 감지 (::이미지URL:: 형태)
-      const imageUrlMatch = remainingText.match(/^::(https?:\/\/[^:]+\.(jpg|jpeg|png|gif|webp|svg))::$/);
+      const imageUrlMatch = remainingText.match(/^::(https?:\/\/[^:\s]+\.(jpg|jpeg|png|gif|webp|svg))::$/);
       if (imageUrlMatch) {
         const imageUrl = imageUrlMatch[1];
         takes.push({
           text: remainingText,
           displayText: '',
-          name: `Image_${takeNumber}`,
+          name: `Image`,
           detectedLanguage: detectedLanguage,
           isImage: true,
           imageUrl: imageUrl
         });
-        takeNumber++;
+        // 이미지는 테이크 번호에 포함하지 않음
         continue;
       }
       while (remainingText.length > 0) {
@@ -983,51 +983,31 @@ export default function App() {
     const [imageError, setImageError] = useState(false);
     
     useEffect(() => {
-      // 상태 초기화
       setImageLoaded(false);
       setImageError(false);
       setImageDimensions({ width: 0, height: 0 });
       
       const img = new Image();
       img.onload = () => {
-        console.log('이미지 로드 성공:', imageUrl);
         setImageDimensions({ width: img.width, height: img.height });
         setImageLoaded(true);
+        setImageError(false);
       };
       img.onerror = () => {
         console.error('이미지 로드 실패:', imageUrl);
-        setImageError(true);
         setImageLoaded(false);
+        setImageError(true);
       };
       img.src = imageUrl;
     }, [imageUrl]);
 
-    if (imageError) {
+    // 로딩 중이거나 에러인 경우 고정 높이로 렌더링
+    if (!imageLoaded || imageError) {
       return (
         <Box
           sx={{
             width: containerWidth,
-            height: '100px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: isSamgukjiFont() ? '#ffffff11' : '#f5f5f5',
-            borderRadius: '8px',
-            color: isSamgukjiFont() ? '#ffffff66' : '#ff0000',
-            fontSize: '14px',
-          }}
-        >
-          이미지 로드 실패
-        </Box>
-      );
-    }
-
-    if (!imageLoaded) {
-      return (
-        <Box
-          sx={{
-            width: containerWidth,
-            height: '100px',
+            height: '120px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1035,9 +1015,10 @@ export default function App() {
             borderRadius: '8px',
             color: isSamgukjiFont() ? '#ffffff66' : '#666',
             fontSize: '14px',
+            margin: '16px 0',
           }}
         >
-          이미지 로딩 중...
+          {imageError ? '이미지를 불러올 수 없습니다' : '이미지 로딩 중...'}
         </Box>
       );
     }
@@ -1054,6 +1035,7 @@ export default function App() {
           justifyContent: 'center',
           alignItems: 'center',
           my: 2,
+          minHeight: '120px', // 최소 높이 설정으로 레이아웃 안정화
         }}
       >
         <img
@@ -1067,10 +1049,6 @@ export default function App() {
             boxShadow: isSamgukjiFont() 
               ? '0 4px 20px rgba(255, 255, 255, 0.1)' 
               : '0 4px 20px rgba(0, 0, 0, 0.1)',
-          }}
-          onError={(e) => {
-            console.error('이미지 렌더링 실패:', imageUrl);
-            setImageError(true);
           }}
         />
       </Box>
@@ -3752,9 +3730,6 @@ export default function App() {
         {takes.length > 0 && (
           <Box sx={{ mt: 0 }} ref={takesContainerRef}>
             {takes.map((take, index) => {
-              // 이미지 테이크를 제외한 실제 테이크 번호 계산 (현재 인덱스까지의 이미지가 아닌 테이크 수)
-              const actualTakeNumber = takes.slice(0, index).filter(t => !t.isImage).length + 1;
-              
               // 커스텀 보이스 이름 표시용
               let customVoiceName = undefined;
               if (take.voiceId) {
@@ -3939,9 +3914,8 @@ export default function App() {
                   )}
                   {take.isImage ? (
                     <ImageComponent 
-                      key={`image-${index}-${take.imageUrl}`}
                       imageUrl={take.imageUrl} 
-                      takeIndex={actualTakeNumber - 1} 
+                      takeIndex={index} 
                     />
                   ) : generatingTake === index ? (
                     <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
@@ -3950,7 +3924,7 @@ export default function App() {
                         currentIndex={-1}
                         fontSize={fontSize}
                         isCurrentTake={index === currentTake}
-                        takeIndex={actualTakeNumber - 1}
+                        takeIndex={index}
                       />
                     </Box>
                   ) : (
@@ -3959,7 +3933,7 @@ export default function App() {
                       currentIndex={index === currentTake && isPlaying && isAudioPlaying ? currentWordIndex : -1}
                       fontSize={fontSize}
                       isCurrentTake={index === currentTake}
-                      takeIndex={actualTakeNumber - 1}
+                      takeIndex={index}
                     />
                   )}
                 </Box>
