@@ -702,6 +702,22 @@ export default function App() {
         takeNumber++;
         continue;
       }
+      
+      // 이미지 URL 감지 (::이미지URL:: 형태)
+      const imageUrlMatch = remainingText.match(/^::(https?:\/\/[^:]+\.(jpg|jpeg|png|gif|webp|svg))::$/);
+      if (imageUrlMatch) {
+        const imageUrl = imageUrlMatch[1];
+        takes.push({
+          text: remainingText,
+          displayText: '',
+          name: `Image_${takeNumber}`,
+          detectedLanguage: detectedLanguage,
+          isImage: true,
+          imageUrl: imageUrl
+        });
+        takeNumber++;
+        continue;
+      }
       while (remainingText.length > 0) {
         if (remainingText.length <= maxLength) {
           // 22자리 voiceID 감지 (::22자리영문숫자::)
@@ -814,21 +830,7 @@ export default function App() {
   // 이미지 URL인지 확인하는 함수
   const isImageUrl = (url) => {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-    return imageExtensions.some(ext => url.toLowerCase().includes(ext));
-  };
-
-  // 이미지 크기를 가져오는 함수
-  const getImageDimensions = (url) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-      img.onerror = () => {
-        resolve({ width: 0, height: 0 });
-      };
-      img.src = url;
-    });
+    return imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
   };
 
   // AAA::BBB::CCC 형식을 파싱하는 함수
@@ -847,18 +849,13 @@ export default function App() {
       console.log('찾은 매치:', fullMatch, '파트:', parts);
       
       if (parts.length === 3) {
-        // 이미지 URL인지 확인
-        const bbb = parts[1] || '';
-        const isImage = isImageUrl(bbb);
-        
         matches.push({
           full: fullMatch,
           aaa: parts[0] || '', // AAA가 없으면 빈 문자열
-          bbb: bbb, // BBB가 없으면 빈 문자열
+          bbb: parts[1] || '', // BBB가 없으면 빈 문자열
           ccc: parts[2] || '', // CCC가 없으면 빈 문자열
           startIndex: match.index,
-          endIndex: match.index + fullMatch.length,
-          isImage: isImage
+          endIndex: match.index + fullMatch.length
         });
       }
     }
@@ -901,15 +898,7 @@ export default function App() {
     // 뒤에서부터 변환하여 인덱스 변화를 방지
     for (let i = matches.length - 1; i >= 0; i--) {
       const match = matches[i];
-      let replacement;
-      
-      if (match.isImage) {
-        // 이미지인 경우 특별한 마커로 대체 (공백으로 감싸서 단어 분할에서 하나의 단어로 처리)
-        replacement = ` [IMAGE:${match.bbb}] `;
-      } else {
-        replacement = match.aaa + match.ccc;
-      }
-      
+      const replacement = match.aaa + match.ccc;
       console.log(`화면 변환 - ${match.full} -> ${replacement}`);
       result = result.slice(0, match.startIndex) + replacement + result.slice(match.endIndex);
     }
@@ -937,37 +926,13 @@ export default function App() {
                   (sampleText.match(/[a-zA-Z]/g) || []).length > (sampleText.match(/[\uAC00-\uD7AF\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g) || []).length;
     }
     
-    // 이미지 마커를 먼저 분리
-    const imageRegex = /\[IMAGE:[^\]]+\]/g;
-    const imageMatches = text.match(imageRegex) || [];
-    
-    // 이미지 마커를 임시 토큰으로 대체
-    let processedText = text;
-    const imageTokens = [];
-    imageMatches.forEach((match, index) => {
-      const token = `__IMAGE_TOKEN_${index}__`;
-      processedText = processedText.replace(match, token);
-      imageTokens.push(match);
-    });
-    
     // 단어+문장기호를 하나의 토큰으로 합침 (일본어 특수문자 포함)
     const wordRegex = /[^\s.,!?。、""'']+[.,!?。、""'']?|[.,!?。、""'']/g;
-    const rawWords = processedText.match(wordRegex) || [];
+    const rawWords = text.match(wordRegex) || [];
     
     // 가중치 부여: 영문일 때 .은 0.5초(7자), 그 외는 0.75초(11자), ,?!는 0.5초(7자)
     // 일본어 특수문자: 。는 마침표와 동일, 、는 쉼표와 동일, 인용부호들은 쉼표와 동일
     return rawWords.map((word, idx) => {
-      // 이미지 토큰인지 확인
-      const imageTokenMatch = word.match(/__IMAGE_TOKEN_(\d+)__/);
-      if (imageTokenMatch) {
-        const imageIndex = parseInt(imageTokenMatch[1]);
-        return {
-          word: imageTokens[imageIndex],
-          weight: 0, // 이미지는 재생 시간에 영향을 주지 않음
-          isEndOfSentence: false
-        };
-      }
-      
       let weight = word.replace(/[.,!?。、""'']/g, '').length;
       if (word.endsWith('.') || word.endsWith('。')) {
         weight += isEnglish ? 7 : 11; // 영문일 때 0.5초, 그 외는 0.75초
@@ -1010,7 +975,75 @@ export default function App() {
     return Math.max(0, words.length - 1);
   };
 
+  // 이미지 컴포넌트
+  const ImageComponent = ({ imageUrl, takeIndex }) => {
+    const containerWidth = getContainerWidth();
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+    
+    useEffect(() => {
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.width, height: img.height });
+        setImageLoaded(true);
+      };
+      img.onerror = () => {
+        console.error('이미지 로드 실패:', imageUrl);
+        setImageLoaded(false);
+      };
+      img.src = imageUrl;
+    }, [imageUrl]);
 
+    if (!imageLoaded) {
+      return (
+        <Box
+          sx={{
+            width: containerWidth,
+            height: '100px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isSamgukjiFont() ? '#ffffff11' : '#f5f5f5',
+            borderRadius: '8px',
+            color: isSamgukjiFont() ? '#ffffff66' : '#666',
+            fontSize: '14px',
+          }}
+        >
+          이미지 로딩 중...
+        </Box>
+      );
+    }
+
+    // 이미지 비율에 따른 너비 계산
+    const isWide = imageDimensions.width > imageDimensions.height;
+    const imageWidth = isWide ? containerWidth * 0.95 : containerWidth * 0.6;
+
+    return (
+      <Box
+        sx={{
+          width: containerWidth,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          my: 2,
+        }}
+      >
+        <img
+          src={imageUrl}
+          alt={`이미지 ${takeIndex + 1}`}
+          style={{
+            width: `${imageWidth}px`,
+            height: 'auto',
+            maxWidth: '100%',
+            borderRadius: '8px',
+            boxShadow: isSamgukjiFont() 
+              ? '0 4px 20px rgba(255, 255, 255, 0.1)' 
+              : '0 4px 20px rgba(0, 0, 0, 0.1)',
+          }}
+        />
+      </Box>
+    );
+  };
 
   // 강조 표시된 텍스트를 렌더링하는 컴포넌트(항상 동일한 기준)
   const HighlightedText = ({ text, currentIndex, fontSize, isCurrentTake, takeIndex }) => {
@@ -1074,59 +1107,6 @@ export default function App() {
         borderRadius: '2px',
       };
     };
-
-    // 이미지 렌더링 컴포넌트
-    const ImageRenderer = ({ imageUrl }) => {
-      const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-      const [isLoading, setIsLoading] = useState(true);
-      const [hasError, setHasError] = useState(false);
-
-      useEffect(() => {
-        const loadImage = async () => {
-          try {
-            setIsLoading(true);
-            setHasError(false);
-            const dims = await getImageDimensions(imageUrl);
-            setDimensions(dims);
-          } catch (error) {
-            console.error('이미지 로드 실패:', error);
-            setHasError(true);
-          } finally {
-            setIsLoading(false);
-          }
-        };
-
-        loadImage();
-      }, [imageUrl]);
-
-      if (isLoading) {
-        return <span style={{ color: '#888', fontStyle: 'italic' }}>이미지 로딩 중...</span>;
-      }
-
-      if (hasError || dimensions.width === 0) {
-        return <span style={{ color: '#ff6b6b', fontStyle: 'italic' }}>이미지를 불러올 수 없습니다</span>;
-      }
-
-      // 이미지 비율에 따른 너비 결정
-      const isLandscape = dimensions.width > dimensions.height;
-      const imageWidth = isLandscape ? '95%' : '70%';
-
-      return (
-        <img
-          src={imageUrl}
-          alt="임베드된 이미지"
-          style={{
-            width: imageWidth,
-            height: 'auto',
-            maxWidth: '100%',
-            borderRadius: '8px',
-            margin: '10px 0',
-            display: 'block',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}
-        />
-      );
-    };
     
     return (
       <span style={{
@@ -1150,28 +1130,15 @@ export default function App() {
             •
           </span>
         )}
-        {words.map((wordObj, index) => {
-          // 이미지 마커인지 확인
-          const imageMatch = wordObj.word.match(/^\[IMAGE:(.+)\]$/);
-          
-          if (imageMatch) {
-            return (
-              <React.Fragment key={index}>
-                <ImageRenderer imageUrl={imageMatch[1]} />
-              </React.Fragment>
-            );
-          }
-          
-          return (
-            <React.Fragment key={index}>
-              <span style={getHighlightStyle(index)}>
-                {wordObj.word}
-              </span>
-              {/* 단어 사이에 일반 공백 */}
-              {index !== words.length - 1 && ' '}
-            </React.Fragment>
-          );
-        })}
+        {words.map((wordObj, index) => (
+          <React.Fragment key={index}>
+            <span style={getHighlightStyle(index)}>
+              {wordObj.word}
+            </span>
+            {/* 단어 사이에 일반 공백 */}
+            {index !== words.length - 1 && ' '}
+          </React.Fragment>
+        ))}
       </span>
     );
   };
@@ -1232,6 +1199,16 @@ export default function App() {
     const useVoiceId = voiceId || (selectedVoiceRef.current && selectedVoiceRef.current.id) || VOICES[0].id;
     if (nextIndex >= takesRef.current.length || audioBufferRef.current[nextIndex]) {
       console.log(`Skip preparing take ${nextIndex}: ${nextIndex >= takesRef.current.length ? 'end of takes' : 'already in buffer'}`);
+      return;
+    }
+    
+    // 이미지 테이크인 경우 다음 테이크로 건너뛰기
+    const nextTake = takesRef.current[nextIndex];
+    if (nextTake && nextTake.isImage) {
+      console.log(`Skipping image take ${nextIndex} in preparation, moving to next`);
+      if (nextIndex + 1 < takesRef.current.length) {
+        prepareNextTake(nextIndex + 1, voiceId, signal);
+      }
       return;
     }
     
@@ -1376,10 +1353,20 @@ export default function App() {
       
       // 첫 테이크 생성 시작 시점 기록 (음악캠프용)
       takeScreenEnterTimeRef.current = Date.now();
-      const firstTakeUrl = await convertToSpeech(textTakes[0], textTakes[0].voiceId ? undefined : null, signal);
-      audioBufferRef.current = { 0: firstTakeUrl };
-      if (textTakes.length > 1) {
-        prepareNextTake(1, null, signal);
+      
+      // 첫 번째 테이크가 이미지인 경우 처리
+      if (textTakes[0] && textTakes[0].isImage) {
+        console.log('First take is an image, skipping TTS generation');
+        audioBufferRef.current = {};
+        if (textTakes.length > 1) {
+          prepareNextTake(1, null, signal);
+        }
+      } else {
+        const firstTakeUrl = await convertToSpeech(textTakes[0], textTakes[0].voiceId ? undefined : null, signal);
+        audioBufferRef.current = { 0: firstTakeUrl };
+        if (textTakes.length > 1) {
+          prepareNextTake(1, null, signal);
+        }
       }
       
       // 음악캠프인 경우 새로운 조건으로 재생
@@ -1510,6 +1497,16 @@ export default function App() {
       setTimeout(() => {
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       }, 300);
+      return;
+    }
+    
+    // 이미지 테이크인 경우 다음 테이크로 건너뛰기
+    const currentTake = takesRef.current[takeIndex];
+    if (currentTake && currentTake.isImage) {
+      console.log(`Skipping image take ${takeIndex}, moving to next`);
+      setTimeout(() => {
+        playTake(takeIndex + 1, signal);
+      }, 500); // 0.5초 후 다음 테이크 재생
       return;
     }
     const audioUrl = audioBufferRef.current[takeIndex];
@@ -3905,7 +3902,12 @@ export default function App() {
                       </span>
                     </Box>
                   )}
-                  {generatingTake === index ? (
+                  {take.isImage ? (
+                    <ImageComponent 
+                      imageUrl={take.imageUrl} 
+                      takeIndex={index} 
+                    />
+                  ) : generatingTake === index ? (
                     <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
                       <HighlightedText
                         text={take}
