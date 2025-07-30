@@ -996,10 +996,13 @@ export default function App() {
             width: '95%',
             height: 'auto',
             maxWidth: '100%',
-            borderRadius: '8px',
-            boxShadow: isSamgukjiFont() 
-              ? '0 4px 20px rgba(255, 255, 255, 0.1)' 
-              : '0 4px 20px rgba(0, 0, 0, 0.1)',
+          }}
+          onLoad={(e) => {
+            const img = e.target;
+            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            if (aspectRatio < 1) { // 세로가 긴 이미지
+              img.style.width = '65%';
+            }
           }}
         />
       </Box>
@@ -3745,7 +3748,7 @@ export default function App() {
                   }}
                 >
                   {/* 커스텀 보이스 이름 오버레이 */}
-                  {customVoiceName && (
+                  {customVoiceName && !take.isImage && (
                     <Box
                       sx={{
                         position: 'absolute',
@@ -3831,7 +3834,7 @@ export default function App() {
                     </Box>
                   )}
                   {/* 커스텀 보이스 추가 버튼 (호버 시 표시) */}
-                  {!customVoiceName && hoveredTakeIndex === index && (
+                  {!customVoiceName && hoveredTakeIndex === index && !take.isImage && (
                     <Box
                       sx={{
                         position: 'absolute',
