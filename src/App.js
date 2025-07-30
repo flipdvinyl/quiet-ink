@@ -984,7 +984,8 @@ export default function App() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          my: 2,
+          mt: '20px',
+          mb: 2,
         }}
       >
         <img

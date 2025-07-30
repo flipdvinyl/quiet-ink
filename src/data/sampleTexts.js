@@ -509,6 +509,8 @@ export const SAMPLE_NEWS_LIST = [
     스티븐 미첼의 번역본을 처음 접한 이후,
     제 삶은 이전과 같지 않았습니다.” -:::: 릭 루빈.
     
+    ::https://i.ibb.co/8nnGDvBM/twoc-01.png::
+
     『1장::일장::』
     이름 붙일 수 있는 코드는
     영원한 코드가 아닙니다.
@@ -523,6 +525,8 @@ export const SAMPLE_NEWS_LIST = [
     이 진리를 이해하는 것이 바로 신비입니다.
     이 문을 열면 모든 깨달음으로 이어집니다.
     
+    ::https://i.ibb.co/zhY8Zs5h/twoc-02.png::
+
     『2장::이장::』
     어떤 코드가 아름답다 칭찬하면,
     다른 코드는 엉성하게 보입니다.
@@ -543,6 +547,8 @@ export const SAMPLE_NEWS_LIST = [
     그의 작업은 끝나고 나면 잊혀지기에,
     오히려 영원히 지속됩니다.
     
+    ::https://i.ibb.co/m5B0dcsR/twoc-03.png::
+
     『3장』::삼장::
     누군가의 실력을 높이 평가하면,
     다른 이들은 마음이 불편해집니다.
@@ -558,6 +564,8 @@ export const SAMPLE_NEWS_LIST = [
     모든 것을 본래의 자연스러운 자리로 되돌립니다.
     무위로 행하면 이루지 못할 일이 없습니다.
     
+    ::https://i.ibb.co/5WXTcLdB/twoc-04.png::
+
     『4장』::사장::
     비어 있지만 마르지 않고,
     그 깊이를 알 수 없는 것이 소스(Source)입니다.
@@ -571,6 +579,8 @@ export const SAMPLE_NEWS_LIST = [
     하늘과 땅조차 소스보다 나중에 나왔으니,
     소스는 신보다도 오래되었습니다.
     
+    ::https://i.ibb.co/qL1LJkk8/twoc-05.png::
+
     『5장』::오장::
     하늘과 땅은 공평합니다.
     모든 것을 있는 그대로 봅니다.
@@ -583,6 +593,8 @@ export const SAMPLE_NEWS_LIST = [
     고요함이 기계를 움직입니다.
     침묵의 중심을 붙잡으세요.
     
+    ::https://i.ibb.co/RpvPt35y/twoc-06.png::
+
     『6장』::육장::
     골짜기의 정신은 영원히 죽지 않습니다.
     그것은 모든 것을 품어주는 어머니와 같은 근원의 여성성입니다.
@@ -590,6 +602,8 @@ export const SAMPLE_NEWS_LIST = [
     모든 창조의 근본이 되는 신성한 자궁과 같습니다.
     그 풍요로움은 언제나 그 자리에 있으며,
     이를 활용하면 결코 다함이 없습니다.
+
+    ::https://i.ibb.co/NgkfDP7v/twoc-07.png::
     
     『7장』::칠장::
     하늘과 땅은 영원합니다.
@@ -599,6 +613,8 @@ export const SAMPLE_NEWS_LIST = [
     바이브 코더는 뒤에 머물기에 앞서 있고,
     집착하지 않기에 만물과 하나가 됩니다.
     이기지 않기에 완벽히 충족됩니다.
+
+    ::https://i.ibb.co/jPDR5LLY/twoc-08.png::
     
     『8장』::팔장::
     최고의 선은 물과 같습니다.
@@ -614,6 +630,8 @@ export const SAMPLE_NEWS_LIST = [
     야망과 질투, 타인의 인정을 구하지 않습니다.
     힘이 아니라 우아함으로 행하고,
     평화롭게 모든 일을 마칩니다.
+
+    ::https://i.ibb.co/rGx2FMts/twoc-09.png::
     
     『9장』::구장::
     컵을 가득 채우면 흘러넘치고,
@@ -624,6 +642,8 @@ export const SAMPLE_NEWS_LIST = [
     그들의 포로가 됩니다.
     일이 끝나면 로그아웃하고 손을 놓으세요.
     이것이 하늘의 길입니다.
+
+    ::https://i.ibb.co/YgqwnVQ/twoc-10.png::
     
     『10장』::십장::
     열린 마음을 유지한 채
@@ -1576,6 +1596,8 @@ export const SAMPLE_NEWS_LIST = [
     in Los Angeles and my life has never been quite the same.
     — Rick Rubin
     
+    ::https://i.ibb.co/8nnGDvBM/twoc-01.png::
+
     1. 
     The code that can be named
     is not the eternal code.
@@ -1589,6 +1611,8 @@ export const SAMPLE_NEWS_LIST = [
     but differ in name only.
     This model is the mystery.
     The gateway to all understanding.
+
+    ::https://i.ibb.co/zhY8Zs5h/twoc-02.png::
     
     2. 
     When we recognize code as elegant,
@@ -1609,6 +1633,8 @@ export const SAMPLE_NEWS_LIST = [
     Accomplishes without expectation.
     The work is done and then forgotten.
     That is why it lasts forever.
+
+    ::https://i.ibb.co/m5B0dcsR/twoc-03.png::
     
     3. 
     If you praise the programmer,
@@ -1627,6 +1653,8 @@ export const SAMPLE_NEWS_LIST = [
     to natural self-sufficiency.
     Do by not doing, and there is nothing
     that cannot be done.
+
+    ::https://i.ibb.co/5WXTcLdB/twoc-04.png::
     
     4. 
     Empty, yet inexhaustible,
@@ -1641,6 +1669,8 @@ export const SAMPLE_NEWS_LIST = [
     I do not know its origin.
     Heaven and earth came later.
     It is older than God.
+
+    ::https://i.ibb.co/qL1LJkk8/twoc-05.png::
     
     5. 
     Heaven and earth are impartial,
@@ -1656,6 +1686,8 @@ export const SAMPLE_NEWS_LIST = [
     the less you understand.
     Stillness runs the machine.
     Hold fast to the silent center.
+
+    ::https://i.ibb.co/RpvPt35y/twoc-06.png::
     
     6. 
     The spirit of the valley never dies.
@@ -1664,6 +1696,8 @@ export const SAMPLE_NEWS_LIST = [
     the root of heaven and earth.
     Her fertility, always present.
     Use it, it will never fail.
+
+    ::https://i.ibb.co/NgkfDP7v/twoc-07.png::
     
     7. 
     Heaven and earth last forever.
@@ -1676,6 +1710,8 @@ export const SAMPLE_NEWS_LIST = [
     thus at one with all.
     Through selfless action
     he is perfectly fulfilled.
+
+    ::https://i.ibb.co/jPDR5LLY/twoc-08.png::
     
     8. 
     The highest good is like water.
@@ -1694,6 +1730,8 @@ export const SAMPLE_NEWS_LIST = [
     No force, just grace,
     and all is done,
     in peace.
+
+    ::https://i.ibb.co/rGx2FMts/twoc-09.png::
     
     9. 
     Fill your cup to the brim
@@ -1707,6 +1745,8 @@ export const SAMPLE_NEWS_LIST = [
     When the work is done,
     log off and detach.
     This is the way of heaven.
+
+    ::https://i.ibb.co/YgqwnVQ/twoc-10.png::
     
     10. 
     Can you remain present and focused
