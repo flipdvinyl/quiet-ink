@@ -978,36 +978,22 @@ export default function App() {
   // 이미지 컴포넌트
   const ImageComponent = ({ imageUrl, takeIndex }) => {
     const containerWidth = getContainerWidth();
-    const [imageLoaded, setImageLoaded] = useState(false);
-    const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
-    const [imageError, setImageError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
-      setImageLoaded(false);
-      setImageError(false);
-      setImageDimensions({ width: 0, height: 0 });
-      
+      setIsLoading(true);
       const img = new Image();
-      img.onload = () => {
-        setImageDimensions({ width: img.width, height: img.height });
-        setImageLoaded(true);
-        setImageError(false);
-      };
-      img.onerror = () => {
-        console.error('이미지 로드 실패:', imageUrl);
-        setImageLoaded(false);
-        setImageError(true);
-      };
+      img.onload = () => setIsLoading(false);
+      img.onerror = () => setIsLoading(false);
       img.src = imageUrl;
     }, [imageUrl]);
 
-    // 로딩 중이거나 에러인 경우 고정 높이로 렌더링
-    if (!imageLoaded || imageError) {
+    if (isLoading) {
       return (
         <Box
           sx={{
             width: containerWidth,
-            height: '120px',
+            height: '100px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1018,14 +1004,10 @@ export default function App() {
             margin: '16px 0',
           }}
         >
-          {imageError ? '이미지를 불러올 수 없습니다' : '이미지 로딩 중...'}
+          이미지 로딩 중...
         </Box>
       );
     }
-
-    // 이미지 비율에 따른 너비 계산
-    const isWide = imageDimensions.width > imageDimensions.height;
-    const imageWidth = isWide ? containerWidth * 0.95 : containerWidth * 0.6;
 
     return (
       <Box
@@ -1035,14 +1017,13 @@ export default function App() {
           justifyContent: 'center',
           alignItems: 'center',
           my: 2,
-          minHeight: '120px', // 최소 높이 설정으로 레이아웃 안정화
         }}
       >
         <img
           src={imageUrl}
           alt={`이미지 ${takeIndex + 1}`}
           style={{
-            width: `${imageWidth}px`,
+            width: '95%',
             height: 'auto',
             maxWidth: '100%',
             borderRadius: '8px',
