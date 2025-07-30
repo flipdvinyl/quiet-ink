@@ -155,6 +155,8 @@ export const SAMPLE_NEWS_LIST = [
     
     export const ESSAY_TEXT = `손 한번 제대로 잡아보지 못했으면서
     
+    ::https://i.ibb.co/N27S9brt/normal.jpg::
+
     우리는 극장에서 처음 손을 잡았다. 광화문 시네큐브였다.
     영화는 왕가위가 참여한 옴니버스 영화였는데
     제목은 〈에로스〉였다.

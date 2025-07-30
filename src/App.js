@@ -904,8 +904,8 @@ export default function App() {
       let replacement;
       
       if (match.isImage) {
-        // 이미지인 경우 특별한 마커로 대체
-        replacement = `[IMAGE:${match.bbb}]`;
+        // 이미지인 경우 특별한 마커로 대체 (공백으로 감싸서 단어 분할에서 하나의 단어로 처리)
+        replacement = ` [IMAGE:${match.bbb}] `;
       } else {
         replacement = match.aaa + match.ccc;
       }
@@ -937,13 +937,37 @@ export default function App() {
                   (sampleText.match(/[a-zA-Z]/g) || []).length > (sampleText.match(/[\uAC00-\uD7AF\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g) || []).length;
     }
     
+    // 이미지 마커를 먼저 분리
+    const imageRegex = /\[IMAGE:[^\]]+\]/g;
+    const imageMatches = text.match(imageRegex) || [];
+    
+    // 이미지 마커를 임시 토큰으로 대체
+    let processedText = text;
+    const imageTokens = [];
+    imageMatches.forEach((match, index) => {
+      const token = `__IMAGE_TOKEN_${index}__`;
+      processedText = processedText.replace(match, token);
+      imageTokens.push(match);
+    });
+    
     // 단어+문장기호를 하나의 토큰으로 합침 (일본어 특수문자 포함)
     const wordRegex = /[^\s.,!?。、""'']+[.,!?。、""'']?|[.,!?。、""'']/g;
-    const rawWords = text.match(wordRegex) || [];
+    const rawWords = processedText.match(wordRegex) || [];
     
     // 가중치 부여: 영문일 때 .은 0.5초(7자), 그 외는 0.75초(11자), ,?!는 0.5초(7자)
     // 일본어 특수문자: 。는 마침표와 동일, 、는 쉼표와 동일, 인용부호들은 쉼표와 동일
     return rawWords.map((word, idx) => {
+      // 이미지 토큰인지 확인
+      const imageTokenMatch = word.match(/__IMAGE_TOKEN_(\d+)__/);
+      if (imageTokenMatch) {
+        const imageIndex = parseInt(imageTokenMatch[1]);
+        return {
+          word: imageTokens[imageIndex],
+          weight: 0, // 이미지는 재생 시간에 영향을 주지 않음
+          isEndOfSentence: false
+        };
+      }
+      
       let weight = word.replace(/[.,!?。、""'']/g, '').length;
       if (word.endsWith('.') || word.endsWith('。')) {
         weight += isEnglish ? 7 : 11; // 영문일 때 0.5초, 그 외는 0.75초
@@ -1134,8 +1158,6 @@ export default function App() {
             return (
               <React.Fragment key={index}>
                 <ImageRenderer imageUrl={imageMatch[1]} />
-                {/* 단어 사이에 일반 공백 */}
-                {index !== words.length - 1 && ' '}
               </React.Fragment>
             );
           }
