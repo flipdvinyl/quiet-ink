@@ -992,7 +992,7 @@ export default function App() {
         setImageLoaded(false);
       };
       img.src = imageUrl;
-    }, [imageUrl]);
+    }, [imageUrl]); // imageUrl만 의존성으로 사용
 
     if (!imageLoaded) {
       return (
@@ -3720,6 +3720,9 @@ export default function App() {
         {takes.length > 0 && (
           <Box sx={{ mt: 0 }} ref={takesContainerRef}>
             {takes.map((take, index) => {
+              // 이미지 테이크를 제외한 실제 테이크 번호 계산
+              const actualTakeNumber = takes.slice(0, index + 1).filter(t => !t.isImage).length;
+              
               // 커스텀 보이스 이름 표시용
               let customVoiceName = undefined;
               if (take.voiceId) {
@@ -3904,6 +3907,7 @@ export default function App() {
                   )}
                   {take.isImage ? (
                     <ImageComponent 
+                      key={`image-${index}-${take.imageUrl}`}
                       imageUrl={take.imageUrl} 
                       takeIndex={index} 
                     />
