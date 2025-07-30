@@ -980,19 +980,47 @@ export default function App() {
     const containerWidth = getContainerWidth();
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+    const [imageError, setImageError] = useState(false);
     
     useEffect(() => {
+      // 상태 초기화
+      setImageLoaded(false);
+      setImageError(false);
+      setImageDimensions({ width: 0, height: 0 });
+      
       const img = new Image();
       img.onload = () => {
+        console.log('이미지 로드 성공:', imageUrl);
         setImageDimensions({ width: img.width, height: img.height });
         setImageLoaded(true);
       };
       img.onerror = () => {
         console.error('이미지 로드 실패:', imageUrl);
+        setImageError(true);
         setImageLoaded(false);
       };
       img.src = imageUrl;
-    }, [imageUrl]); // imageUrl만 의존성으로 사용
+    }, [imageUrl]);
+
+    if (imageError) {
+      return (
+        <Box
+          sx={{
+            width: containerWidth,
+            height: '100px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isSamgukjiFont() ? '#ffffff11' : '#f5f5f5',
+            borderRadius: '8px',
+            color: isSamgukjiFont() ? '#ffffff66' : '#ff0000',
+            fontSize: '14px',
+          }}
+        >
+          이미지 로드 실패
+        </Box>
+      );
+    }
 
     if (!imageLoaded) {
       return (
@@ -1039,6 +1067,10 @@ export default function App() {
             boxShadow: isSamgukjiFont() 
               ? '0 4px 20px rgba(255, 255, 255, 0.1)' 
               : '0 4px 20px rgba(0, 0, 0, 0.1)',
+          }}
+          onError={(e) => {
+            console.error('이미지 렌더링 실패:', imageUrl);
+            setImageError(true);
           }}
         />
       </Box>
@@ -3720,8 +3752,8 @@ export default function App() {
         {takes.length > 0 && (
           <Box sx={{ mt: 0 }} ref={takesContainerRef}>
             {takes.map((take, index) => {
-              // 이미지 테이크를 제외한 실제 테이크 번호 계산
-              const actualTakeNumber = takes.slice(0, index + 1).filter(t => !t.isImage).length;
+              // 이미지 테이크를 제외한 실제 테이크 번호 계산 (현재 인덱스까지의 이미지가 아닌 테이크 수)
+              const actualTakeNumber = takes.slice(0, index).filter(t => !t.isImage).length + 1;
               
               // 커스텀 보이스 이름 표시용
               let customVoiceName = undefined;
@@ -3909,7 +3941,7 @@ export default function App() {
                     <ImageComponent 
                       key={`image-${index}-${take.imageUrl}`}
                       imageUrl={take.imageUrl} 
-                      takeIndex={index} 
+                      takeIndex={actualTakeNumber - 1} 
                     />
                   ) : generatingTake === index ? (
                     <Box sx={{ transition: 'opacity 1s', opacity: fadeIn ? 1 : 0.4 }}>
@@ -3918,7 +3950,7 @@ export default function App() {
                         currentIndex={-1}
                         fontSize={fontSize}
                         isCurrentTake={index === currentTake}
-                        takeIndex={index}
+                        takeIndex={actualTakeNumber - 1}
                       />
                     </Box>
                   ) : (
@@ -3927,7 +3959,7 @@ export default function App() {
                       currentIndex={index === currentTake && isPlaying && isAudioPlaying ? currentWordIndex : -1}
                       fontSize={fontSize}
                       isCurrentTake={index === currentTake}
-                      takeIndex={index}
+                      takeIndex={actualTakeNumber - 1}
                     />
                   )}
                 </Box>
