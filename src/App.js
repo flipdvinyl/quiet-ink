@@ -978,6 +978,18 @@ export default function App() {
   // 이미지 컴포넌트
   const ImageComponent = ({ imageUrl, takeIndex }) => {
     const containerWidth = getContainerWidth();
+    const [imageWidth, setImageWidth] = useState('95%');
+
+    useEffect(() => {
+      const img = new Image();
+      img.onload = () => {
+        const aspectRatio = img.naturalWidth / img.naturalHeight;
+        if (aspectRatio < 1) { // 세로가 긴 이미지
+          setImageWidth('65%');
+        }
+      };
+      img.src = imageUrl;
+    }, [imageUrl]);
 
     return (
       <Box
@@ -993,16 +1005,9 @@ export default function App() {
           src={imageUrl}
           alt="이미지"
           style={{
-            width: '95%',
+            width: imageWidth,
             height: 'auto',
             maxWidth: '100%',
-          }}
-          onLoad={(e) => {
-            const img = e.target;
-            const aspectRatio = img.naturalWidth / img.naturalHeight;
-            if (aspectRatio < 1) { // 세로가 긴 이미지
-              img.style.width = '65%';
-            }
           }}
         />
       </Box>
