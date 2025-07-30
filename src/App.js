@@ -811,6 +811,26 @@ export default function App() {
     return takes;
   };
 
+  // 이미지 URL인지 확인하는 함수
+  const isImageUrl = (url) => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+    return imageExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
+  // 이미지 크기를 가져오는 함수
+  const getImageDimensions = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        resolve({ width: 0, height: 0 });
+      };
+      img.src = url;
+    });
+  };
+
   // AAA::BBB::CCC 형식을 파싱하는 함수
   const parseSpecialFormat = (text) => {
     // 정확히 두 개의 ::가 있는 패턴을 찾는 정규식
@@ -827,13 +847,18 @@ export default function App() {
       console.log('찾은 매치:', fullMatch, '파트:', parts);
       
       if (parts.length === 3) {
+        // 이미지 URL인지 확인
+        const bbb = parts[1] || '';
+        const isImage = isImageUrl(bbb);
+        
         matches.push({
           full: fullMatch,
           aaa: parts[0] || '', // AAA가 없으면 빈 문자열
-          bbb: parts[1] || '', // BBB가 없으면 빈 문자열
+          bbb: bbb, // BBB가 없으면 빈 문자열
           ccc: parts[2] || '', // CCC가 없으면 빈 문자열
           startIndex: match.index,
-          endIndex: match.index + fullMatch.length
+          endIndex: match.index + fullMatch.length,
+          isImage: isImage
         });
       }
     }
@@ -876,7 +901,15 @@ export default function App() {
     // 뒤에서부터 변환하여 인덱스 변화를 방지
     for (let i = matches.length - 1; i >= 0; i--) {
       const match = matches[i];
-      const replacement = match.aaa + match.ccc;
+      let replacement;
+      
+      if (match.isImage) {
+        // 이미지인 경우 특별한 마커로 대체
+        replacement = `[IMAGE:${match.bbb}]`;
+      } else {
+        replacement = match.aaa + match.ccc;
+      }
+      
       console.log(`화면 변환 - ${match.full} -> ${replacement}`);
       result = result.slice(0, match.startIndex) + replacement + result.slice(match.endIndex);
     }
@@ -1017,6 +1050,59 @@ export default function App() {
         borderRadius: '2px',
       };
     };
+
+    // 이미지 렌더링 컴포넌트
+    const ImageRenderer = ({ imageUrl }) => {
+      const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+      const [isLoading, setIsLoading] = useState(true);
+      const [hasError, setHasError] = useState(false);
+
+      useEffect(() => {
+        const loadImage = async () => {
+          try {
+            setIsLoading(true);
+            setHasError(false);
+            const dims = await getImageDimensions(imageUrl);
+            setDimensions(dims);
+          } catch (error) {
+            console.error('이미지 로드 실패:', error);
+            setHasError(true);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+
+        loadImage();
+      }, [imageUrl]);
+
+      if (isLoading) {
+        return <span style={{ color: '#888', fontStyle: 'italic' }}>이미지 로딩 중...</span>;
+      }
+
+      if (hasError || dimensions.width === 0) {
+        return <span style={{ color: '#ff6b6b', fontStyle: 'italic' }}>이미지를 불러올 수 없습니다</span>;
+      }
+
+      // 이미지 비율에 따른 너비 결정
+      const isLandscape = dimensions.width > dimensions.height;
+      const imageWidth = isLandscape ? '95%' : '70%';
+
+      return (
+        <img
+          src={imageUrl}
+          alt="임베드된 이미지"
+          style={{
+            width: imageWidth,
+            height: 'auto',
+            maxWidth: '100%',
+            borderRadius: '8px',
+            margin: '10px 0',
+            display: 'block',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}
+        />
+      );
+    };
     
     return (
       <span style={{
@@ -1040,15 +1126,30 @@ export default function App() {
             •
           </span>
         )}
-        {words.map((wordObj, index) => (
-          <React.Fragment key={index}>
-            <span style={getHighlightStyle(index)}>
-              {wordObj.word}
-            </span>
-            {/* 단어 사이에 일반 공백 */}
-            {index !== words.length - 1 && ' '}
-          </React.Fragment>
-        ))}
+        {words.map((wordObj, index) => {
+          // 이미지 마커인지 확인
+          const imageMatch = wordObj.word.match(/^\[IMAGE:(.+)\]$/);
+          
+          if (imageMatch) {
+            return (
+              <React.Fragment key={index}>
+                <ImageRenderer imageUrl={imageMatch[1]} />
+                {/* 단어 사이에 일반 공백 */}
+                {index !== words.length - 1 && ' '}
+              </React.Fragment>
+            );
+          }
+          
+          return (
+            <React.Fragment key={index}>
+              <span style={getHighlightStyle(index)}>
+                {wordObj.word}
+              </span>
+              {/* 단어 사이에 일반 공백 */}
+              {index !== words.length - 1 && ' '}
+            </React.Fragment>
+          );
+        })}
       </span>
     );
   };
