@@ -977,10 +977,12 @@ export default function App() {
 
   // 이미지 컴포넌트
   const ImageComponent = ({ imageUrl, takeIndex }) => {
+    const containerWidth = getContainerWidth();
+    
     return (
       <Box
         sx={{
-          width: '100%',
+          width: containerWidth,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
