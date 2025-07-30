@@ -978,36 +978,6 @@ export default function App() {
   // 이미지 컴포넌트
   const ImageComponent = ({ imageUrl, takeIndex }) => {
     const containerWidth = getContainerWidth();
-    const [isLoading, setIsLoading] = useState(true);
-    
-    useEffect(() => {
-      setIsLoading(true);
-      const img = new Image();
-      img.onload = () => setIsLoading(false);
-      img.onerror = () => setIsLoading(false);
-      img.src = imageUrl;
-    }, [imageUrl]);
-
-    if (isLoading) {
-      return (
-        <Box
-          sx={{
-            width: containerWidth,
-            height: '100px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: isSamgukjiFont() ? '#ffffff11' : '#f5f5f5',
-            borderRadius: '8px',
-            color: isSamgukjiFont() ? '#ffffff66' : '#666',
-            fontSize: '14px',
-            margin: '16px 0',
-          }}
-        >
-          이미지 로딩 중...
-        </Box>
-      );
-    }
 
     return (
       <Box
