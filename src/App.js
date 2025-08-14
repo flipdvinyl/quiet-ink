@@ -1139,13 +1139,17 @@ export default function App() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
       console.log(`API URL: ${apiUrl}`);
       
+      // Holy molly voice requires excited style
+      const style = useVoiceId === '6151a25f6a7f5b1e000023' ? 'excited' : undefined;
+      
       const response = await fetch(`${apiUrl}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           text: apiText, 
           voice_id: useVoiceId,
-          language: detectedLanguage 
+          language: detectedLanguage,
+          style: style
         }),
         signal
       });
