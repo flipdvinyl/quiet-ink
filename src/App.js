@@ -4358,7 +4358,7 @@ export default function App() {
           onClick={() => { hapticFeedback.light(); handleFontFamilyToggle(); }}
         >
           <span>ㄱ</span>
-                      {showFontName && !isSamgukjiFont() && (
+                      {showFontName && (
             <Box
               key={fontNameKey}
               sx={{
@@ -4413,34 +4413,7 @@ export default function App() {
               })()}
             </Box>
           )}
-          {/* 삼국지3 폰트일 때 특별 표시 */}
-          {isSamgukjiFont() && (
-            <Box
-              sx={{
-                position: 'absolute',
-                left: '50%',
-                top: 'calc(120% + 5px)',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                color: '#ffffff',
-                opacity: 0.8,
-                fontSize: '15px',
-                animation: 'fadeInOut 3s forwards',
-                '@keyframes fadeInOut': {
-                  '0%': { opacity: 0 },
-                  '5%': { opacity: 0.8 },
-                  '80%': { opacity: 0.8 },
-                  '100%': { opacity: 0 }
-                }
-              }}>
-              <span style={{ lineHeight: '1.2em' }}>삼</span>
-              <span style={{ lineHeight: '1.2em' }}>국</span>
-              <span style={{ lineHeight: '1.2em' }}>지</span>
-              <span style={{ lineHeight: '1.2em' }}>3</span>
-            </Box>
-          )}
+
         </Box>
       </Box>
     </Box>
