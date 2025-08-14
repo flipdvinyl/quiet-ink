@@ -547,7 +547,7 @@ export default function App() {
     { name: '미술관 도슨트', id: '0f7ccb849f108608620302', description: `는 예술과 당신 사이의 안내자예요. 자연과 예술, 시간과 사유를 연결하는 자리에 늘 함께 있어요.` },
     { name: '박물관 사서', id: 'eb5e0f9308248300915305', description: `눈에 띄지 않게 조용히 책 사이를 오가며, 누군가의 하루에 맞는 문장을 골라줘요.` },
     { name: '진지한 케일리', id: 'weKbNjMh2V5MuXziwHwjoT', description: `는 회사 스튜디오에서 우연히 목소리를 녹음 했어요. 연기엔 자신 있었다지만 누가 봐도 또박또박 읽고 있지요.` },
-    { name: 'Holy molly', id: '6151a25f6a7f5b1e000023', description: `! 나 아메리칸이에요. K-POP 때문에 한국어가 조금 배우기 시작했어요. 그래서 한국어는… 어… not perfect, but 영어는 완전 confident 있어요!` },
+    { name: 'Holy molly', id: '6151a25f6a7f5b1e000023', description: `! 나 아메리칸이에요. K-POP 때문에 한국어가 조큼 배우기 시작했어요. 그래서 한국어는… 어… not perfect, but 영어는 완전 confident 있어요!` },
     { name: '릭 루빈', id: 'nNkPFG9fioPzmsxGpawKbv', description: `은 화려한 테크닉보다 감각과 직관을 믿는 사람이에요. 명상으로 마음을 비우고, 음악의 본질만을 담아내는 전설적인 프로듀서죠.` },
     { name: '소년', id: '4MvvJLQnDUoBMojLQ8YhTW', description: `은 개울가 징검다리에서 소녀를 기다리고, 그녀가 건넌 흰 조약돌을 소중히 간직하는 조심스러운 아이예요.` },
     { name: '소녀', id: 'd1pREPnx17ahNcRvUfdhR8', description: `는 '이 바보'라며 웃으며 조약돌을 던지고, 수숫단 속에서 소년에게 몸을 기댄 채 조용히 따뜻함을 나누는 섬세한 아이예요.` },
